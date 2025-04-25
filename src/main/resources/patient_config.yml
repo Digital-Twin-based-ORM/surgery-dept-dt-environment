@@ -1,0 +1,15 @@
+properties:
+  - name: "currentLocation"
+    initialValue: ""
+  - name: "Name"
+    initialValue: ""
+  - name: "Surname"
+    initialValue: ""
+
+actions:
+
+events:
+
+relationships:
+
+topic: ""
