@@ -38,10 +38,11 @@ public class Main {
             DigitalTwin digitalTwinVSM = new DigitalTwin("vsm-s1-digital-twin", new VSMShadowingFunction("vsm-shadowing"));
             MqttVSMPhysicalAdapter builderVSM = new MqttVSMPhysicalAdapter("127.0.0.1", 1883, "1");
             MqttPhysicalAdapter mqttPhysicalAdapterVSM = builderVSM.build("vsm-mqtt-pa");
-
+            HttpDigitalAdapterConfiguration configVsm = new HttpDigitalAdapterConfiguration("my-http-adapter", "localhost", 8081);
+            HttpDigitalAdapter httpDigitalAdapterVsm = new HttpDigitalAdapter(configVsm, digitalTwinVSM);
             digitalTwinVSM.addPhysicalAdapter(mqttPhysicalAdapterVSM);
             digitalTwinVSM.addDigitalAdapter(new VSMDigitalAdapter("vsm-digital-adapter"));
-
+            digitalTwinVSM.addDigitalAdapter(httpDigitalAdapterVsm);
             // Create the Digital Twin Engine
             DigitalTwinEngine digitalTwinEngine = new DigitalTwinEngine();
 
@@ -56,7 +57,7 @@ public class Main {
             // digitalTwinEngine.startDigitalTwin(id);
 
             // Start all the DTs registered on the engine
-            digitalTwinEngine.startAll();
+            //digitalTwinEngine.startAll();
 
         }catch (Exception e){
             e.printStackTrace();

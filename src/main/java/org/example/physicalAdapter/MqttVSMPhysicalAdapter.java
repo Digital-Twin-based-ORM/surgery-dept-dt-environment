@@ -13,9 +13,9 @@ public class MqttVSMPhysicalAdapter {
     public MqttVSMPhysicalAdapter(String host, Integer port, String idDT) throws MqttPhysicalAdapterConfigurationException {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
 
-        builder.addPhysicalAssetPropertyAndTopic("heartRate", 0, "vsm/s1/" + idDT + "/heartRate", Integer::parseInt);
-        builder.addPhysicalAssetPropertyAndTopic("serialCode", 0, "vsm/s1/" + idDT + "/serialcode", Integer::parseInt);
-        builder.addPhysicalAssetPropertyAndTopic("patiendId", "", "vsm/s1/" + idDT + "/patientId", i -> i);
+        builder.addPhysicalAssetPropertyAndTopic("heartRate", 0, "anylogic/id/VitalSignMonitor/" + idDT + "/heartRate", Integer::parseInt);
+        builder.addPhysicalAssetPropertyAndTopic("serialCode", 0, "anylogic/id/VitalSignMonitor/" + idDT + "/serialcode", Integer::parseInt);
+        builder.addPhysicalAssetPropertyAndTopic("patiendId", "", "anylogic/id/VitalSignMonitor/" + idDT + "/patientId", i -> i);
     }
 
     public MqttVSMPhysicalAdapter(MqttPhysicalAdapterConfigurationBuilder builder) {

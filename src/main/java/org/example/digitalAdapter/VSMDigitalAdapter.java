@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// TODO do configuration
 public class VSMDigitalAdapter extends DigitalAdapter<Void> {
 
     private static final Logger logger = LoggerFactory.getLogger(VSMDigitalAdapter.class);
@@ -31,18 +32,15 @@ public class VSMDigitalAdapter extends DigitalAdapter<Void> {
 
     @Override
     protected void onStateUpdate(DigitalTwinState digitalTwinState, DigitalTwinState digitalTwinState1, ArrayList<DigitalTwinStateChange> arrayList) {
-        // pick the current patient id associated and send the value to it
         logger.info("STATE CHANGES: " + arrayList.size());
         DigitalTwinStateChange stateChange = arrayList.getFirst();
         logger.info("New state update from VSM Digital Adapter: " + arrayList.getFirst());
         logger.info("Current state from VSM Digital Adapter: " + digitalTwinState);
-        // DigitalTwinStateChange{operation=OPERATION_UPDATE, resourceType=PROPERTY, resource=DigitalTwinStateProperty{key='heartRate', value=75, type='java.lang.Integer', readable=true, writable=true, exposed=true}}
-        // DigitalTwinState{properties={heartRate=DigitalTwinStateProperty{key='heartRate', value=75, type='java.lang.Integer', readable=true, writable=true, exposed=true}
         if(stateChange.getResourceType().equals(DigitalTwinStateChange.ResourceType.PROPERTY) && stateChange.getResource() instanceof DigitalTwinStateProperty<?> stateProperty) {
             try {
                 if(digitalTwinState.getPropertyList().isPresent()) {
                     List<DigitalTwinStateProperty<?>> list = digitalTwinState.getPropertyList().get();
-                    Optional<DigitalTwinStateProperty<?>> property = list.stream().filter(i -> i.getKey().equals("patiendId")).findFirst();
+                    Optional<DigitalTwinStateProperty<?>> property = list.stream().filter(i -> i.getKey().equals("patiendId")).filter(i -> i.getValue() != "").findFirst();
                     property.ifPresent(digitalTwinStateProperty -> publishUpdate(digitalTwinStateProperty.getValue().toString(), stateProperty.getValue().toString(), stateProperty.getKey()));
                 }
             } catch (WldtDigitalTwinStatePropertyException e) {
