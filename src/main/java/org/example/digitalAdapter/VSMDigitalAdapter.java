@@ -11,72 +11,65 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
+import org.example.digitalAdapter.configuration.VSMConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-// TODO do configuration
-public class VSMDigitalAdapter extends DigitalAdapter<Void> {
+public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implements AbstractMQTTDigitalAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(VSMDigitalAdapter.class);
-    public VSMDigitalAdapter(String id, Void configuration) {
+    private final MQTTAdapterConfiguration mqttConfiguration;
+
+    private final String PATIENT_ID_PROPERTY = "patiendId";
+
+    public VSMDigitalAdapter(String id, VSMConfiguration configuration, MQTTAdapterConfiguration mqttConfiguration) {
         super(id, configuration);
+        this.mqttConfiguration = mqttConfiguration;
     }
 
-    public VSMDigitalAdapter(String id) {
-        super(id);
+    @Override
+    public void publishUpdate(String id, String value, String valueType, String body) {
+        AbstractMQTTDigitalAdapter.super.publishUpdate(id, value, valueType, body);
+    }
+
+    @Override
+    public Logger getLogger() {
+        return logger;
+    }
+
+    @Override
+    public MQTTAdapterConfiguration getMQTTConfiguration() {
+        return this.mqttConfiguration;
     }
 
     @Override
     protected void onStateUpdate(DigitalTwinState digitalTwinState, DigitalTwinState digitalTwinState1, ArrayList<DigitalTwinStateChange> arrayList) {
         logger.info("STATE CHANGES: " + arrayList.size());
-        DigitalTwinStateChange stateChange = arrayList.getFirst();
+        List<DigitalTwinStateProperty<?>> changedProperties = arrayList.stream()
+                .filter(i -> i.getResource() instanceof DigitalTwinStateProperty<?>)
+                .map(i -> (DigitalTwinStateProperty<?>)i.getResource())
+                .filter(i -> getConfiguration().getObservedProperties().contains(i.getKey()))
+                .collect(Collectors.toList());
+
         logger.info("New state update from VSM Digital Adapter: " + arrayList.getFirst());
         logger.info("Current state from VSM Digital Adapter: " + digitalTwinState);
-        if(stateChange.getResourceType().equals(DigitalTwinStateChange.ResourceType.PROPERTY) && stateChange.getResource() instanceof DigitalTwinStateProperty<?> stateProperty) {
+        for(DigitalTwinStateProperty<?> property : changedProperties) {
             try {
                 if(digitalTwinState.getPropertyList().isPresent()) {
                     List<DigitalTwinStateProperty<?>> list = digitalTwinState.getPropertyList().get();
-                    Optional<DigitalTwinStateProperty<?>> property = list.stream().filter(i -> i.getKey().equals("patiendId")).filter(i -> i.getValue() != "").findFirst();
-                    property.ifPresent(digitalTwinStateProperty -> publishUpdate(digitalTwinStateProperty.getValue().toString(), stateProperty.getValue().toString(), stateProperty.getKey()));
+                    Optional<DigitalTwinStateProperty<?>> patientId = list.stream().filter(i -> i.getKey().equals(PATIENT_ID_PROPERTY)).filter(i -> i.getValue() != "").findFirst();
+                    logger.info("Notifying new state...");
+                    patientId.ifPresent(digitalTwinStateProperty -> publishUpdate(digitalTwinStateProperty.getValue().toString(), property.getValue().toString(), property.getKey(), ""));
                 }
             } catch (WldtDigitalTwinStatePropertyException e) {
                 throw new RuntimeException(e);
             }
-        }
-    }
-
-    private void publishUpdate(String patientId, String value, String valueType) {
-        String topic        = "patient/" + patientId + "/" + valueType;
-        int qos             = 2;
-        String broker       = "tcp://127.0.0.1:1883";
-        String clientId     = "kotlin_mqtt_subscriber_" + System.currentTimeMillis();
-        MemoryPersistence persistence = new MemoryPersistence();
-
-        try {
-            MqttClient sampleClient = new MqttClient(broker, clientId, persistence);
-            MqttConnectOptions connOpts = new MqttConnectOptions();
-            connOpts.setCleanSession(true);
-            System.out.println("Connecting to broker: "+broker);
-            sampleClient.connect(connOpts);
-            System.out.println("Connected");
-            System.out.println("Publishing message: " + value);
-            MqttMessage message = new MqttMessage(value.getBytes());
-            message.setQos(qos);
-            sampleClient.publish(topic, message);
-            System.out.println("Message published");
-            sampleClient.disconnect();
-            System.out.println("Disconnected");
-        } catch(MqttException me) {
-            System.out.println("reason "+me.getReasonCode());
-            System.out.println("msg "+me.getMessage());
-            System.out.println("loc "+me.getLocalizedMessage());
-            System.out.println("cause "+me.getCause());
-            System.out.println("excep "+me);
-            logger.error(me.getMessage());
         }
     }
 

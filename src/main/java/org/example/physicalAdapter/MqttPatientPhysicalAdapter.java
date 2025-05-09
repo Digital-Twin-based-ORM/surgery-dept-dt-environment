@@ -27,6 +27,13 @@ public class MqttPatientPhysicalAdapter {
         this.addIntProperty("heartRate", 0, "patient/" + this.idDT + "/heartRate");
         this.addIntProperty("systolicBloodPressure", 0, "anylogic/id/patient/" + this.idDT + "/systolicBloodPressure");
         this.addIntProperty("diastolicBloodPressure", 0, "anylogic/id/patient/" + this.idDT + "/diastolicBloodPressure");
+
+        // TODO how to manage static properties? With DT storage?
+        // Add static properties compliant to FHIR Patient resource (https://www.hl7.org/fhir/patient.html)
+        this.addStringProperty("name", "", "anylogic/id/patient/" + this.idDT + "/name");
+        // Gender is a code: male | female | other | unknown
+        this.addStringProperty("gender", "", "anylogic/id/patient/" + this.idDT + "/gender");
+        this.addStringProperty("birthDate", "", "anylogic/id/patient/" + this.idDT + "/birthDate");
     }
 
     void addStringProperty(String key, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
