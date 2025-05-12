@@ -11,9 +11,9 @@ import org.slf4j.Logger;
 
 public interface AbstractMQTTDigitalAdapter {
 
-    default void publishUpdate(String id, String value, String valueType, String body) {
+    default void publishUpdate(String id, String valueKey, String body) {
         System.out.println("Attempting to send message...");
-        String topic        = getMQTTConfiguration().getBaseTopic() + "/" + id + "/" + valueType;
+        String topic        = getMQTTConfiguration().getBaseTopic() + "/" + id + "/" + valueKey;
         int qos             = 2;
         String broker       = getMQTTConfiguration().getBroker();
         String clientId     = getMQTTConfiguration().getClientId();
@@ -26,7 +26,7 @@ public interface AbstractMQTTDigitalAdapter {
             System.out.println("Connecting to broker: "+broker);
             sampleClient.connect(connOpts);
             System.out.println("Connected");
-            System.out.println("Publishing message: " + value);
+            System.out.println("Publishing message: " + body);
             MqttMessage message = new MqttMessage(body.getBytes());
             message.setQos(qos);
             sampleClient.publish(topic, message);
