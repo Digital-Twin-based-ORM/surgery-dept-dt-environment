@@ -34,8 +34,8 @@ public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implemen
     }
 
     @Override
-    public void publishUpdate(String id, String value, String valueType, String body) {
-        AbstractMQTTDigitalAdapter.super.publishUpdate(id, value, valueType, body);
+    public void publishUpdate(String id, String valueType, String body) {
+        AbstractMQTTDigitalAdapter.super.publishUpdate(id, valueType, body);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implemen
                     List<DigitalTwinStateProperty<?>> list = digitalTwinState.getPropertyList().get();
                     Optional<DigitalTwinStateProperty<?>> patientId = list.stream().filter(i -> i.getKey().equals(PATIENT_ID_PROPERTY)).filter(i -> i.getValue() != "").findFirst();
                     logger.info("Notifying new state...");
-                    patientId.ifPresent(digitalTwinStateProperty -> publishUpdate(digitalTwinStateProperty.getValue().toString(), property.getValue().toString(), property.getKey(), ""));
+                    patientId.ifPresent(digitalTwinStateProperty -> publishUpdate(digitalTwinStateProperty.getValue().toString(), property.getKey(), property.getValue().toString()));
                 }
             } catch (WldtDigitalTwinStatePropertyException e) {
                 throw new RuntimeException(e);

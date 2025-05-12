@@ -3,7 +3,6 @@ package org.example.digitalAdapter.configuration;
 import java.util.List;
 
 public class VSMConfiguration {
-
     private final List<String> observedProperties;
 
     public VSMConfiguration(List<String> observedProperties) {
