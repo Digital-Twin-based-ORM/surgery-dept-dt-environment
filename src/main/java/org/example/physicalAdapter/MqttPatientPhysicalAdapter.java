@@ -12,28 +12,21 @@ public class MqttPatientPhysicalAdapter {
 
     MqttPhysicalAdapterConfigurationBuilder builder;
 
-    private String host;
-    private Integer port;
-    private String idDT;
-
     public MqttPatientPhysicalAdapter(String host, Integer port, String idDT) throws MqttPhysicalAdapterConfigurationException {
-        this.host = host;
-        this.port = port;
-        this.idDT = idDT;
-        this.builder = MqttPhysicalAdapterConfiguration.builder(this.host, this.port);
+        this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
 
         // Configuring the mqtt physical and http digital adapter
-        this.addStringProperty("currentLocation", "", "anylogic/id/patient/" + this.idDT + "/currentLocation");
-        this.addIntProperty("heartRate", 0, "patient/" + this.idDT + "/heartRate");
-        this.addIntProperty("systolicBloodPressure", 0, "anylogic/id/patient/" + this.idDT + "/systolicBloodPressure");
-        this.addIntProperty("diastolicBloodPressure", 0, "anylogic/id/patient/" + this.idDT + "/diastolicBloodPressure");
+        this.addStringProperty("currentLocation", "", "anylogic/id/patient/" + idDT + "/currentLocation");
+        this.addIntProperty("heartRate", 0, "patient/" + idDT + "/heartRate");
+        this.addIntProperty("systolicBloodPressure", 0, "anylogic/id/patient/" + idDT + "/systolicBloodPressure");
+        this.addIntProperty("diastolicBloodPressure", 0, "anylogic/id/patient/" + idDT + "/diastolicBloodPressure");
 
         // TODO how to manage static properties? With DT storage?
         // Add static properties compliant to FHIR Patient resource (https://www.hl7.org/fhir/patient.html)
-        this.addStringProperty("name", "", "anylogic/id/patient/" + this.idDT + "/name");
+        this.addStringProperty("name", "", "anylogic/id/patient/" + idDT + "/name");
         // Gender is a code: male | female | other | unknown
-        this.addStringProperty("gender", "", "anylogic/id/patient/" + this.idDT + "/gender");
-        this.addStringProperty("birthDate", "", "anylogic/id/patient/" + this.idDT + "/birthDate");
+        this.addStringProperty("gender", "", "anylogic/id/patient/" + idDT + "/gender");
+        this.addStringProperty("birthDate", "", "anylogic/id/patient/" + idDT + "/birthDate");
     }
 
     void addStringProperty(String key, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
