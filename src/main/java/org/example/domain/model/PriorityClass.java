@@ -22,4 +22,15 @@ public enum PriorityClass {
     public DateType getDateType() {
         return dateType;
     }
+
+    @Override
+    public String toString() {
+        switch (this) {
+            case A -> { return "A"; }
+            case B -> { return "B"; }
+            case C -> { return "C"; }
+            case D -> { return "D"; }
+        }
+        return "";
+    }
 }
