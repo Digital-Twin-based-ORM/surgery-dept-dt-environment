@@ -7,11 +7,15 @@ import it.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceCreatedWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceDeletedWldtEvent;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class AggregatePatientsShadowingFunction extends AbstractShadowing {
-    public AggregatePatientsShadowingFunction(String id) {
+public class AllSurgeriesShadowingFunction extends AbstractShadowing {
+
+    private static final Logger logger = LoggerFactory.getLogger(AllSurgeriesShadowingFunction.class);
+
+    public AllSurgeriesShadowingFunction(String id) {
         super(id);
     }
 
@@ -52,7 +56,9 @@ public class AggregatePatientsShadowingFunction extends AbstractShadowing {
 
     @Override
     protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
-
+        if (physicalAssetEventWldtEvent != null) {
+            logger.info("Event notified... " + physicalAssetEventWldtEvent.getPhysicalEventKey());
+        }
     }
 
     @Override

@@ -6,9 +6,9 @@ import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceCreatedWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceDeletedWldtEvent;
-import it.wldt.core.model.ShadowingFunction;
 import it.wldt.core.state.DigitalTwinStateProperty;
 import it.wldt.exception.WldtDigitalTwinStateException;
+import org.example.dt.property.PatientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +20,10 @@ public class PatientShadowingFunction extends AbstractShadowing {
 
     public PatientShadowingFunction(String id) {
         super(id);
+    }
+
+    public PatientShadowingFunction(String id, PatientProperties immutableProperties) {
+        super(id, immutableProperties);
     }
 
     @Override
@@ -57,7 +61,6 @@ public class PatientShadowingFunction extends AbstractShadowing {
     protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalAssetPropertyWldtEvent) {
         logger.info("Property variation detected... " + physicalAssetPropertyWldtEvent.getPhysicalPropertyId());
         try {
-
             //Update Digital Twin State
             //NEW from 0.3.0 -> Start State Transaction
             this.digitalTwinStateManager.startStateTransaction();
@@ -70,7 +73,6 @@ public class PatientShadowingFunction extends AbstractShadowing {
         } catch (WldtDigitalTwinStateException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
