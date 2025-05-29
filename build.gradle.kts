@@ -36,6 +36,8 @@ dependencies {
     implementation("io.github.wldt:mqtt-physical-adapter:0.1.2")
     implementation("io.github.wldt:mqtt-digital-adapter:0.1.2")
     implementation(libs.wodt.wldt)
+    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
+    implementation("mysql:mysql-connector-java:8.0.33")
     // SnakeYAML YAML parser
     implementation("org.yaml:snakeyaml:2.0")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))

@@ -7,6 +7,7 @@ import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationE
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.exception.*;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.example.dt.property.PatientProperties;
 import org.example.physicalAdapter.MqttPatientPhysicalAdapter;
 import org.example.shadowing.PatientShadowingFunction;
 import org.example.utils.HttpConnectionConfig;
@@ -16,8 +17,9 @@ public class PatientDigitalTwin {
 
     private final DigitalTwin digitalTwin;
 
-    public PatientDigitalTwin(String idDT, MqttPropertiesConfig mqttConfig, HttpConnectionConfig connectionConfig) throws ModelException, WldtRuntimeException, WldtWorkerException, EventBusException, WldtDigitalTwinStateException, MqttPhysicalAdapterConfigurationException, MqttException, WldtConfigurationException {
+    public PatientDigitalTwin(String idDT, MqttPropertiesConfig mqttConfig, HttpConnectionConfig connectionConfig, PatientProperties properties) throws ModelException, WldtRuntimeException, WldtWorkerException, EventBusException, WldtDigitalTwinStateException, MqttPhysicalAdapterConfigurationException, MqttException, WldtConfigurationException {
         // Create the new Digital Twin with its Shadowing Function
+
         this.digitalTwin = new DigitalTwin(idDT, new PatientShadowingFunction("patient-" + idDT + "-shadowing"));
 
         MqttPatientPhysicalAdapter builder = new MqttPatientPhysicalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDT);
