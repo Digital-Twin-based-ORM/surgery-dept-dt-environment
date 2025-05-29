@@ -1,0 +1,32 @@
+package org.example.domain.model;
+
+public enum SurgeryEvents {
+    OutR("OutR"),
+    InF("InF"),
+    InORB("InORB"),
+    InSI("InSI"),
+    StAnest("StAnest"),
+    PzPr("PzPr"),
+    InSO("InSO"),
+    StCh("StCh"),
+    EndCh("EndCh"),
+    OutSO("OutSO"),
+    InRR("InRR"),
+    OutRR("OutRR"),
+    InUTI("InUTI"),
+    OutORB("OutORB"),
+    InR("InR"),
+    InOutR("InOutR"),
+    InOutORB("InOutORB")
+    ;
+
+    private final String name;
+
+    SurgeryEvents(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
