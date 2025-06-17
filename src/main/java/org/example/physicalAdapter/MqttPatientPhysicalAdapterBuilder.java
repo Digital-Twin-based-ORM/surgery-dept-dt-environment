@@ -1,27 +1,30 @@
 package org.example.physicalAdapter;
 
+import com.google.gson.JsonObject;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfigurationBuilder;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.example.utils.UtilsFunctions;
 
-import java.util.function.Function;
-
-public class MqttPatientPhysicalAdapter {
+public class MqttPatientPhysicalAdapterBuilder {
 
     MqttPhysicalAdapterConfigurationBuilder builder;
+    MqttPhysicalAdapter adapter = null;
 
-    public MqttPatientPhysicalAdapter(String host, Integer port, String idDT) throws MqttPhysicalAdapterConfigurationException {
+    public MqttPatientPhysicalAdapterBuilder(String host, Integer port, String idDT) throws MqttPhysicalAdapterConfigurationException {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
-
+        // TODO DT storage
         // Configuring the mqtt physical and http digital adapter
-        this.addStringProperty("currentLocation", "", "anylogic/id/patient/" + idDT + "/currentLocation");
+        this.addStringProperty("currentLocation", "", "anylogic/id/Patient/" + idDT + "/currentLocation");
         this.addIntProperty("heartRate", 0, "patient/" + idDT + "/heartRate");
-        this.addIntProperty("systolicBloodPressure", 0, "anylogic/id/patient/" + idDT + "/systolicBloodPressure");
-        this.addIntProperty("diastolicBloodPressure", 0, "anylogic/id/patient/" + idDT + "/diastolicBloodPressure");
-
-        // TODO how to manage static properties? With DT storage?
+        this.builder.addPhysicalAssetEventAndTopic("bpmAnomaly", "text/plain", "anylogic/id/Patient/" + idDT + "/bpmAnomaly", String::toString);
+        this.builder.addPhysicalAssetActionAndTopic("addSurgery", "text/plain", "patient.surgery", "anylogic/id/Patient/" + idDT + "/addSurgery", (String i) ->  {
+            JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(i);
+            assert jsonObject != null;
+            return jsonObject.get("uri").getAsString();
+        });
     }
 
     void addStringProperty(String key, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
@@ -34,13 +37,9 @@ public class MqttPatientPhysicalAdapter {
         builder.addPhysicalAssetPropertyAndTopic(key, initialValue, topic, Integer::parseInt);
     }
 
-    <T> void addProperty(String key, String type, String contentType, String topic, Function<T, String> topicFunction) throws MqttPhysicalAdapterConfigurationException {
-        // Configuring the mqtt physical and http digital adapter
-        builder.addPhysicalAssetActionAndTopic(key, type, contentType, topic, topicFunction);
-    }
-
     public MqttPhysicalAdapter build(String id) throws MqttPhysicalAdapterConfigurationException, MqttException {
-        return new MqttPhysicalAdapter(id, builder.build());
+        adapter = new MqttPhysicalAdapter(id, builder.build());
+        return adapter;
     }
 
 }

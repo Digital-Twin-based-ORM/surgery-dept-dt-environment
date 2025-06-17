@@ -2,12 +2,15 @@ package org.example.shadowing;
 
 import it.wldt.adapter.physical.PhysicalAssetDescription;
 import it.wldt.adapter.physical.PhysicalAssetProperty;
+import it.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.wldt.core.model.ShadowingFunction;
 import it.wldt.core.state.DigitalTwinStateAction;
 import it.wldt.core.state.DigitalTwinStateEvent;
 import it.wldt.core.state.DigitalTwinStateProperty;
+import it.wldt.core.state.DigitalTwinStateRelationship;
 import it.wldt.exception.WldtDigitalTwinStateException;
 import org.example.dt.property.InternalProperties;
+import org.example.utils.GlobalValues;
 import org.slf4j.Logger;
 
 import java.util.Map;
@@ -37,6 +40,23 @@ public abstract class AbstractShadowing extends ShadowingFunction {
             } catch (WldtDigitalTwinStateException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    @Override
+    protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalAssetPropertyWldtEvent) {
+        try {
+            //Update Digital Twin State
+            //NEW from 0.3.0 -> Start State Transaction
+            this.digitalTwinStateManager.startStateTransaction();
+
+            this.digitalTwinStateManager.updateProperty(new DigitalTwinStateProperty<>(physicalAssetPropertyWldtEvent.getPhysicalPropertyId(), physicalAssetPropertyWldtEvent.getBody()));
+
+            //NEW from 0.3.0 -> Commit State Transaction
+            this.digitalTwinStateManager.commitStateTransaction();
+
+        } catch (WldtDigitalTwinStateException e) {
+            e.printStackTrace();
         }
     }
 
@@ -102,6 +122,23 @@ public abstract class AbstractShadowing extends ShadowingFunction {
                     }
                 });
 
+                pad.getRelationships().forEach(relationship -> {
+                    try{
+                        if(relationship != null && relationship.getName().equals(GlobalValues.SURGERY_RELATIONSHIP_NAME)){
+
+                            DigitalTwinStateRelationship<String> insideInDtStateRelationship = new DigitalTwinStateRelationship<>(relationship.getName(), relationship.getName());
+
+                            this.digitalTwinStateManager.createRelationship(insideInDtStateRelationship);
+
+                            observePhysicalAssetRelationship(relationship);
+
+                            System.out.println("[TestShadowingFunction] -> onDigitalTwinBound() -> Relationship Created & Observed :" + relationship.getName());
+                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                });
+
             });
 
             // NEW from 0.3.0 -> Commit DT State Change Transaction to apply the changes on the DT State and notify about the change
@@ -119,5 +156,14 @@ public abstract class AbstractShadowing extends ShadowingFunction {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    protected void updateProperty(String key, Object value) throws WldtDigitalTwinStateException {
+        this.digitalTwinStateManager.startStateTransaction();
+
+        this.digitalTwinStateManager.updateProperty(new DigitalTwinStateProperty<>(key, value));
+
+        //NEW from 0.3.0 -> Commit State Transaction
+        this.digitalTwinStateManager.commitStateTransaction();
     }
 }

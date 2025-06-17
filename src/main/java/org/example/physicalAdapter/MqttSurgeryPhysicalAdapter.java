@@ -12,6 +12,7 @@ public class MqttSurgeryPhysicalAdapter {
 
     public final static String PRIORITY_KEY = "priority";
     public final static String STATUS_KEY = "status";
+    public final static String LAST_EVENT = "last_event";
     MqttPhysicalAdapterConfigurationBuilder builder;
 
     public MqttSurgeryPhysicalAdapter(String idDT, String host, Integer port) throws MqttPhysicalAdapterConfigurationException {
@@ -29,6 +30,7 @@ public class MqttSurgeryPhysicalAdapter {
                 throw new IllegalArgumentException();
         });
         builder.addPhysicalAssetPropertyAndTopic(STATUS_KEY, "", "anylogic/id/surgery/" + idDT + "/" + STATUS_KEY, i -> i);
+        builder.addPhysicalAssetPropertyAndTopic(LAST_EVENT, "", "anylogic/id/surgery/" + idDT + "/" + LAST_EVENT, i -> i);
     }
 
     public MqttPhysicalAdapter build(String id) throws MqttPhysicalAdapterConfigurationException, MqttException {

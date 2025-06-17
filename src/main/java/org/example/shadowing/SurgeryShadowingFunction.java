@@ -19,6 +19,9 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
+import static org.example.physicalAdapter.MqttSurgeryPhysicalAdapter.LAST_EVENT;
 
 public class SurgeryShadowingFunction extends AbstractShadowing{
 
@@ -77,11 +80,40 @@ public class SurgeryShadowingFunction extends AbstractShadowing{
     protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
         if (physicalAssetEventWldtEvent != null) {
             logger.info("Event notified... " + physicalAssetEventWldtEvent.getPhysicalEventKey());
-            // TODO based on the event change the appropriate property: if something strange occurs generate an anomaly (an event not registered for example)
+            // based on the event change the appropriate property: if something strange occurs generate an anomaly (an event not registered for example)
             SurgeryEvents event = (SurgeryEvents) physicalAssetEventWldtEvent.getBody();
             try {
+                long timestamp = physicalAssetEventWldtEvent.getCreationTimestamp();
+                Optional<SurgeryEvents> previousEventOpt;
+                if(event.equals(SurgeryEvents.InOutR)) {
+                    if(eventsTimestamps.get(SurgeryEvents.InR) != 0L) {
+                        previousEventOpt = Optional.of(SurgeryEvents.OutR);
+                    } else {
+                        previousEventOpt = Optional.of(SurgeryEvents.InR);
+                    }
+                } else if((event.equals(SurgeryEvents.InOutORB))) {
+                    if(eventsTimestamps.get(SurgeryEvents.InORB) != 0L) {
+                        previousEventOpt = Optional.of(SurgeryEvents.OutORB);
+                    } else {
+                        previousEventOpt = Optional.of(SurgeryEvents.InORB);
+                    }
+                } else  {
+                    previousEventOpt = event.getPreviousEvent();
+                }
+
+                if(previousEventOpt.isPresent()) {
+                    if(eventsTimestamps.get(previousEventOpt.get()) == 0L || eventsTimestamps.get(previousEventOpt.get()) > timestamp) {
+                        // TODO notify error
+                        logger.error("Inconsistent event update: " + event);
+                    }
+                }
+                eventsTimestamps.replace(event, timestamp);
+                logger.info("The new events set is: " + eventsTimestamps);
+                super.updateProperty(LAST_EVENT, event.getName());
                 digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(physicalAssetEventWldtEvent.getPhysicalEventKey(), "", LocalDate.now().toEpochDay()));
             } catch (WldtDigitalTwinStateEventNotificationException e) {
+                throw new RuntimeException(e);
+            } catch (WldtDigitalTwinStateException e) {
                 throw new RuntimeException(e);
             }
             logger.info("Update state to... " + event);

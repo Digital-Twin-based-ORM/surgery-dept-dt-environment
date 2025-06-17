@@ -15,11 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class PatientSemantics implements DigitalTwinSemantics {
+import static org.example.utils.GlobalValues.SURGERY_RELATIONSHIP_NAME;
 
-    /* TODO how to manage multiple rdf resources, like Patient and Observation
-     *  or Practitioner not directly mapped to a DT, but within the same patient DT
-     */
+public class PatientSemantics implements DigitalTwinSemantics {
 
     private static final Map<String, RdfUriResource> PROPERTIES_DOMAIN_TAG = Map.of(
             "name", new RdfUriResource(URI.create("http://www.hl7.org/fhir/HumanName")),
@@ -28,8 +26,12 @@ public class PatientSemantics implements DigitalTwinSemantics {
             "birthDate", new RdfUriResource(URI.create("http://www.hl7.org/fhir/date"))
     );
 
+    private static final Map<String, RdfUriResource> RELATIONSHIPS_DOMAIN_TAG = Map.of(
+            SURGERY_RELATIONSHIP_NAME, new RdfUriResource(URI.create("http://www.hl7.org/fhir/Procedure"))
+    );
+
     private static final Map<String, RdfUriResource> ACTIONS_DOMAIN_TAG = Map.of(
-            // "setDestination", new RdfUriResource(URI.create("https://purl.org/onto/SetDestinationCommand"))
+            "addSurgery", new RdfUriResource(URI.create("https://purl.org/mao/onto/AddSurgery"))
     );
 
     @Override
@@ -44,12 +46,12 @@ public class PatientSemantics implements DigitalTwinSemantics {
 
     @Override
     public Optional<RdfUriResource> getDomainTag(DigitalTwinStateRelationship<?> digitalTwinStateRelationship) {
-        return Optional.empty();
+        return getOptionalFromMap(RELATIONSHIPS_DOMAIN_TAG, digitalTwinStateRelationship.getName());
     }
 
     @Override
     public Optional<RdfUriResource> getDomainTag(DigitalTwinStateAction digitalTwinStateAction) {
-        return Optional.empty();
+        return getOptionalFromMap(ACTIONS_DOMAIN_TAG, digitalTwinStateAction.getKey());
     }
 
     @Override
@@ -123,7 +125,14 @@ public class PatientSemantics implements DigitalTwinSemantics {
 
     @Override
     public Optional<List<RdfUnSubjectedTriple>> mapData(DigitalTwinStateRelationshipInstance<?> digitalTwinStateRelationshipInstance) {
-        return Optional.empty();
+        return getOptionalFromMap(RELATIONSHIPS_DOMAIN_TAG, digitalTwinStateRelationshipInstance.getRelationshipName()).map(uri ->
+                List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(uri.getUri().get()),
+                                new RdfIndividual(URI.create(digitalTwinStateRelationshipInstance.getTargetId().toString()))
+                        )
+                )
+        );
     }
 
     private <T> Optional<T> getOptionalFromMap(final Map<String, T> map, final String key) {

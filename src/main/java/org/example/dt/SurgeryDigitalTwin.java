@@ -6,7 +6,6 @@ import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.exception.*;
-import it.wldt.storage.DefaultWldtStorage;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.example.digitalAdapter.SurgeriesAggregatorDigitalAdapter;
 import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
@@ -31,7 +30,7 @@ public class SurgeryDigitalTwin {
         this.digitalTwin = new DigitalTwin(idDT, new SurgeryShadowingFunction("surgery-" + idDT + "-shadowing", properties));
 
         MqttSurgeryPhysicalAdapter builder = new MqttSurgeryPhysicalAdapter(idDT, mqttConfig.getHost(), mqttConfig.getPort());
-        HttpDigitalAdapterConfiguration config = new HttpDigitalAdapterConfiguration(idDT + "-http-adapter", connectionConfig.getHost(), connectionConfig.getPort());
+        HttpDigitalAdapterConfiguration config = new HttpDigitalAdapterConfiguration(idDT + "-surgery-http-adapter", connectionConfig.getHost(), connectionConfig.getPort());
 
         MqttPhysicalAdapter mqttPhysicalAdapter = builder.build(idDT + "-mqtt-pa");
 
@@ -39,14 +38,10 @@ public class SurgeryDigitalTwin {
 
         SurgeriesAggregatorDigitalAdapter aggregatorDigitalAdapter = new SurgeriesAggregatorDigitalAdapter(idDT, new SurgeriesAggregatorConfiguration(idDT), new MQTTAdapterConfiguration("", "", ""));
 
-        // Create a new WldtStorage instance using the default implementation and observing all the events
-        DefaultWldtStorage myStorage = new DefaultWldtStorage("test_storage", true);
-
         // Physical Adapter with Configuration
         digitalTwin.addPhysicalAdapter(mqttPhysicalAdapter);
         digitalTwin.addDigitalAdapter(httpDigitalAdapter);
         digitalTwin.addDigitalAdapter(aggregatorDigitalAdapter);
-        digitalTwin.getStorageManager().putStorage(myStorage);
     }
 
     public DigitalTwin getDigitalTwin() {

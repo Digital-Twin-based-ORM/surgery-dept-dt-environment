@@ -26,7 +26,7 @@ public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implemen
     private static final Logger logger = LoggerFactory.getLogger(VSMDigitalAdapter.class);
     private final MQTTAdapterConfiguration mqttConfiguration;
 
-    private final String PATIENT_ID_PROPERTY = "patiendId";
+    private final String PATIENT_ID_PROPERTY = "patientId";
 
     public VSMDigitalAdapter(String id, VSMConfiguration configuration, MQTTAdapterConfiguration mqttConfiguration) {
         super(id, configuration);

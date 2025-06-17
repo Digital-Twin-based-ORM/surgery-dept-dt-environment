@@ -21,7 +21,7 @@ public class HttpConnectionConfig {
         return new HttpConnectionConfig("localhost", 8080);
     }
 
-    public static HttpConnectionConfig getWithPort(int port) {
-        return new HttpConnectionConfig("localhost", port);
+    public static HttpConnectionConfig getWithPort(int configPort) {
+        return new HttpConnectionConfig("localhost", configPort);
     }
 }

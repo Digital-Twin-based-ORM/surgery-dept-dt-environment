@@ -15,7 +15,7 @@ public class MqttVSMPhysicalAdapter {
 
         builder.addPhysicalAssetPropertyAndTopic("heartRate", 0, "anylogic/id/VitalSignMonitor/" + idDT + "/heartRate", Integer::parseInt);
         builder.addPhysicalAssetPropertyAndTopic("serialCode", 0, "anylogic/id/VitalSignMonitor/" + idDT + "/serialcode", Integer::parseInt);
-        builder.addPhysicalAssetPropertyAndTopic("patiendId", "", "anylogic/id/VitalSignMonitor/" + idDT + "/patientId", i -> i);
+        builder.addPhysicalAssetPropertyAndTopic("patientId", "", "anylogic/id/VitalSignMonitor/" + idDT + "/patientId", i -> i);
     }
 
     public MqttVSMPhysicalAdapter(MqttPhysicalAdapterConfigurationBuilder builder) {

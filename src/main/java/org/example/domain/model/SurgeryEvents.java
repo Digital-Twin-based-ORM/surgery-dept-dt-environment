@@ -1,5 +1,7 @@
 package org.example.domain.model;
 
+import java.util.Optional;
+
 public enum SurgeryEvents {
     OutR("OutR"),
     InF("InF"),
@@ -28,5 +30,13 @@ public enum SurgeryEvents {
 
     public String getName() {
         return name;
+    }
+
+    public Optional<SurgeryEvents> getPreviousEvent()  {
+        if(this.ordinal() == 0) {
+            return Optional.empty();
+        } else {
+            return Optional.of(SurgeryEvents.values()[this.ordinal() - 1]);
+        }
     }
 }

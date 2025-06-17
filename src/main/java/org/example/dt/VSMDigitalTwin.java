@@ -27,7 +27,7 @@ public class VSMDigitalTwin {
         MqttVSMPhysicalAdapter builderVSM = new MqttVSMPhysicalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDT);
         MqttPhysicalAdapter mqttPhysicalAdapterVSM = builderVSM.build(idDT + "-vsm-mqtt-pa");
 
-        HttpDigitalAdapterConfiguration configVsm = new HttpDigitalAdapterConfiguration(idDT + "-http-adapter", connectionConfig.getHost(), connectionConfig.getPort());
+        HttpDigitalAdapterConfiguration configVsm = new HttpDigitalAdapterConfiguration(idDT + "-vsm-http-adapter", connectionConfig.getHost(), connectionConfig.getPort());
         HttpDigitalAdapter httpDigitalAdapterVsm = new HttpDigitalAdapter(configVsm, digitalTwin);
 
         MQTTAdapterConfiguration configDigitalAdapter = new MQTTAdapterConfiguration("patient", "tcp://127.0.0.1:1883", "kotlin_mqtt_subscriber_" + System.currentTimeMillis());
