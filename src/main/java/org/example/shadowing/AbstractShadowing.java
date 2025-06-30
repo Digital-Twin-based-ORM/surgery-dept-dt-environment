@@ -124,9 +124,9 @@ public abstract class AbstractShadowing extends ShadowingFunction {
 
                 pad.getRelationships().forEach(relationship -> {
                     try{
-                        if(relationship != null && relationship.getName().equals(GlobalValues.SURGERY_RELATIONSHIP_NAME)){
+                        if(relationship != null){
 
-                            DigitalTwinStateRelationship<String> insideInDtStateRelationship = new DigitalTwinStateRelationship<>(relationship.getName(), relationship.getName());
+                            DigitalTwinStateRelationship<String> insideInDtStateRelationship = new DigitalTwinStateRelationship<>(relationship.getName(), relationship.getType());
 
                             this.digitalTwinStateManager.createRelationship(insideInDtStateRelationship);
 
