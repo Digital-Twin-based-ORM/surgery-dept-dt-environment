@@ -17,7 +17,7 @@ import org.example.shadowing.SurgeryShadowingFunction;
 import org.example.utils.HttpConnectionConfig;
 import org.example.utils.MqttPropertiesConfig;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class SurgeryDigitalTwin {
 
@@ -26,7 +26,7 @@ public class SurgeryDigitalTwin {
     // TODO unire MqttPropertiesConfig e MQTTAdapterConfiguration
     public SurgeryDigitalTwin(String idDT, MqttPropertiesConfig mqttConfig, HttpConnectionConfig connectionConfig) throws ModelException, WldtRuntimeException, WldtWorkerException, EventBusException, WldtDigitalTwinStateException, MqttPhysicalAdapterConfigurationException, MqttException, WldtConfigurationException, StorageException {
         // Create the new Digital Twin with its Shadowing Function
-        SurgeryProperties properties = new SurgeryProperties("", "", "", LocalDate.now());
+        SurgeryProperties properties = new SurgeryProperties("", "", "", LocalDateTime.now());
         this.digitalTwin = new DigitalTwin(idDT, new SurgeryShadowingFunction("surgery-" + idDT + "-shadowing", properties));
 
         MqttSurgeryPhysicalAdapter builder = new MqttSurgeryPhysicalAdapter(idDT, mqttConfig.getHost(), mqttConfig.getPort());
