@@ -16,4 +16,16 @@ public class UtilsFunctions {
         }
     }
 
+    public static String getJsonField(String json, String field) {
+        Gson gson = new Gson();
+        try {
+            JsonObject jsonObj = stringToJsonObjectGson(json);
+            assert jsonObj != null;
+            return jsonObj.get(field).getAsString();
+        } catch (JsonParseException e) {
+            System.out.println("Errore: ${e.message}");
+            return null;
+        }
+    }
+
 }
