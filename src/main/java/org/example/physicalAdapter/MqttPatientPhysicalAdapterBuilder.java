@@ -10,6 +10,7 @@ import org.example.utils.UtilsFunctions;
 
 public class MqttPatientPhysicalAdapterBuilder {
 
+    public final static String SURGERY_REQUEST = "newSurgeryRequested";
     MqttPhysicalAdapterConfigurationBuilder builder;
     MqttPhysicalAdapter adapter = null;
 
@@ -20,7 +21,7 @@ public class MqttPatientPhysicalAdapterBuilder {
         this.addStringProperty("currentLocation", "", "anylogic/id/Patient/" + idDT + "/currentLocation");
         this.addIntProperty("heartRate", 0, "patient/" + idDT + "/heartRate");
         this.builder.addPhysicalAssetEventAndTopic("bpmAnomaly", "text/plain", "anylogic/id/Patient/" + idDT + "/bpmAnomaly", String::toString);
-        this.builder.addPhysicalAssetActionAndTopic("addSurgery", "text/plain", "patient.surgery", "anylogic/id/Patient/" + idDT + "/addSurgery", (String i) ->  {
+        this.builder.addPhysicalAssetEventAndTopic(SURGERY_REQUEST, "text/plain", "anylogic/id/Patient/" + idDT + "/" + SURGERY_REQUEST, (String i) ->  {
             JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(i);
             assert jsonObject != null;
             return jsonObject.get("uri").getAsString();

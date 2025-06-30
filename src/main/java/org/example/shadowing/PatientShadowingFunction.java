@@ -8,26 +8,32 @@ import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceCreatedWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceDeletedWldtEvent;
+import it.wldt.core.state.DigitalTwinStateEventNotification;
 import it.wldt.core.state.DigitalTwinStateRelationshipInstance;
 import it.wldt.exception.EventBusException;
+import it.wldt.exception.WldtDigitalTwinStateEventNotificationException;
+import it.wldt.exception.WldtDigitalTwinStateException;
+import org.example.digitalAdapter.MqttPatientDigitalAdapter;
 import org.example.domain.model.HealthInformation;
 import org.example.dt.property.PatientProperties;
+import org.example.physicalAdapter.MqttPatientPhysicalAdapterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.util.*;
 
-import static org.example.dt.PatientDigitalTwin.SUBJECTED_TO;
-import static org.example.utils.GlobalValues.SURGERY_RELATIONSHIP_NAME;
-import static org.example.utils.GlobalValues.SURGERY_RELATIONSHIP_TYPE;
+import static org.example.utils.GlobalValues.*;
 
 public class PatientShadowingFunction extends AbstractShadowing {
 
     private static final Logger logger = LoggerFactory.getLogger(PatientShadowingFunction.class);
     private Timer healthCheck = new Timer("HealthCheck");
     private HealthInformation healthInformation = new HealthInformation();
+    private String lastCurrentlyLocatedRelationshipInstanceKey = "";
 
     PhysicalAssetRelationship<String> subjectedToRelationship = null;
+    PhysicalAssetRelationship<String> currentlyLocatedRelationship = null;
 
     public PatientShadowingFunction(String id) {
         super(id);
@@ -64,7 +70,9 @@ public class PatientShadowingFunction extends AbstractShadowing {
 
         //Create Test Relationship to describe that the Physical Device is inside a building
         this.subjectedToRelationship = new PhysicalAssetRelationship<>(SURGERY_RELATIONSHIP_NAME, SURGERY_RELATIONSHIP_TYPE);
+        this.currentlyLocatedRelationship = new PhysicalAssetRelationship<>(LOCATED_IN_RELATIONSHIP_NAME, LOCATED_IN_RELATIONSHIP_TYPE);
         pad.getRelationships().add(subjectedToRelationship);
+        pad.getRelationships().add(currentlyLocatedRelationship);
 
         adaptersPhysicalAssetDescriptionMap.put("relationship_pad", pad);
 
@@ -92,7 +100,25 @@ public class PatientShadowingFunction extends AbstractShadowing {
                 try {
                     this.publishPhysicalAssetActionWldtEvent("newHeartRate", value);
                     checkPatientHealth();
-                } catch (EventBusException e) {
+                } catch (EventBusException | WldtDigitalTwinStateEventNotificationException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            case "currentLocation": {
+                try {
+                    logger.info("New relationship... currentlyLocated");
+                    Map<String, Object> relationshipMetadata = new HashMap<>();
+                    relationshipMetadata.put("location", physicalAssetPropertyWldtEvent.getBody());
+
+                    if(!lastCurrentlyLocatedRelationshipInstanceKey.isEmpty()) {
+                        //this.digitalTwinStateManager.deleteRelationshipInstance(LOCATED_IN_RELATIONSHIP_NAME, lastCurrentlyLocatedRelationshipInstanceKey); //it updates automatically
+                    }
+                    PhysicalAssetRelationshipInstance<String> relInstance = this.currentlyLocatedRelationship.createRelationshipInstance("emptyUri");
+                    this.digitalTwinStateManager.startStateTransaction();
+                    this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(relInstance.getRelationship().getName(), relInstance.getTargetId(), relInstance.getKey(), relationshipMetadata));
+                    this.digitalTwinStateManager.commitStateTransaction();
+                    this.lastCurrentlyLocatedRelationshipInstanceKey = relInstance.getKey();
+                } catch (WldtDigitalTwinStateException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -101,7 +127,21 @@ public class PatientShadowingFunction extends AbstractShadowing {
 
     @Override
     protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
+        if(Objects.equals(physicalAssetEventWldtEvent.getPhysicalEventKey(), MqttPatientPhysicalAdapterBuilder.SURGERY_REQUEST)) {
+            try {
+                this.digitalTwinStateManager.startStateTransaction();
+                String surgeryUri = (String)physicalAssetEventWldtEvent.getBody();
+                // TODO add surgery date
+                Map<String, Object> relationshipMetadata = new HashMap<>();
+                relationshipMetadata.put("surgery_date", "f0");
 
+                PhysicalAssetRelationshipInstance<String> relInstance = this.subjectedToRelationship.createRelationshipInstance(surgeryUri, relationshipMetadata);
+                this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(relInstance.getRelationship().getName(), relInstance.getTargetId(), relInstance.getKey()));
+                this.digitalTwinStateManager.commitStateTransaction();
+            } catch (WldtDigitalTwinStateException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
@@ -120,26 +160,12 @@ public class PatientShadowingFunction extends AbstractShadowing {
             String actionKey = digitalActionWldtEvent.getActionKey();
             logger.info("New event: " + actionKey);
             this.publishPhysicalAssetActionWldtEvent(digitalActionWldtEvent.getActionKey(), digitalActionWldtEvent.getBody());
-
-            if(Objects.equals(actionKey, SUBJECTED_TO)) {
-                this.digitalTwinStateManager.startStateTransaction();
-                String surgeryUri = (String)digitalActionWldtEvent.getBody();
-                // TODO add surgery date
-                Map<String, Object> relationshipMetadata = new HashMap<>();
-                relationshipMetadata.put("surgery_date", "f0");
-
-                PhysicalAssetRelationshipInstance<String> relInstance = this.subjectedToRelationship.createRelationshipInstance(surgeryUri, relationshipMetadata);
-
-                this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(relInstance.getRelationship().getName(), relInstance.getTargetId(), relInstance.getKey()));
-
-                this.digitalTwinStateManager.commitStateTransaction();
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void checkPatientHealth() throws EventBusException {
+    private void checkPatientHealth() throws EventBusException, WldtDigitalTwinStateEventNotificationException {
         List<Integer> bpms = healthInformation.getLastValues();
         int sum = 0;
         for(int i : bpms) {
@@ -147,7 +173,7 @@ public class PatientShadowingFunction extends AbstractShadowing {
         }
         double mean = (double) sum / (long) bpms.size();
         if(mean < 50 || mean > 110) {
-            this.publishPhysicalAssetActionWldtEvent("bpmAnomaly", mean);
+            this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(MqttPatientDigitalAdapter.BPM_ANOMALY, null, LocalDate.now().toEpochDay()));
         }
     }
 }

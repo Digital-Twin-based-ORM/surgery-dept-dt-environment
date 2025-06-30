@@ -18,8 +18,6 @@ import org.example.utils.MqttPropertiesConfig;
 
 public class PatientDigitalTwin {
 
-    public final static String SUBJECTED_TO = "addSurgery";
-
     private final DigitalTwin digitalTwin;
 
     public PatientDigitalTwin(String idDT, MqttPropertiesConfig mqttConfig, HttpConnectionConfig connectionConfig, PatientProperties properties) throws ModelException, WldtRuntimeException, WldtWorkerException, EventBusException, WldtDigitalTwinStateException, MqttPhysicalAdapterConfigurationException, MqttException, WldtConfigurationException, MqttDigitalAdapterConfigurationException {
