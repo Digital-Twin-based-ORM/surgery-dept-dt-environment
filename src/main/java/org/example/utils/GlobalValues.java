@@ -19,5 +19,8 @@ public class GlobalValues {
     public static final String PROGRAMMED_IN_RELATIONSHIP_TYPE = "programmedIn_rel";
     public static final String EXECUTED_IN_RELATIONSHIP_TYPE = "executedIn_rel";
 
+    /* OPERATING ROOM */
+    public static final String BELONGS_TO_NAME = "belongsTo";
+    public static final String BELONGS_TO_TYPE = "belongsTo_rel";
 
 }

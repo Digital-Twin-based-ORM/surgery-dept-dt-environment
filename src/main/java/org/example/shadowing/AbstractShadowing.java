@@ -33,14 +33,7 @@ public abstract class AbstractShadowing extends ShadowingFunction {
 
     @Override
     protected void onStart() {
-        // create static initial values of the DT, these are not linked to any physical adapter
-        for(PhysicalAssetProperty<?> property: properties.getProperties()) {
-            try {
-                this.digitalTwinStateManager.createProperty(new DigitalTwinStateProperty<>(property.getKey(), property.getInitialValue()));
-            } catch (WldtDigitalTwinStateException e) {
-                throw new RuntimeException(e);
-            }
-        }
+
     }
 
     @Override
@@ -65,6 +58,15 @@ public abstract class AbstractShadowing extends ShadowingFunction {
         try{
             // NEW from 0.3.0 -> Start DT State Change Transaction
             this.digitalTwinStateManager.startStateTransaction();
+
+            // create static initial values of the DT, these are not linked to any physical adapter
+            for(PhysicalAssetProperty<?> property: properties.getProperties()) {
+                try {
+                    this.digitalTwinStateManager.createProperty(new DigitalTwinStateProperty<>(property.getKey(), property.getInitialValue()));
+                } catch (WldtDigitalTwinStateException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
             //Iterate over all the received PAD from connected Physical Adapters
             adaptersPhysicalAssetDescriptionMap.values().forEach(pad -> {

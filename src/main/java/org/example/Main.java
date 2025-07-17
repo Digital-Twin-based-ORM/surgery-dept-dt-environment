@@ -3,9 +3,11 @@ package org.example;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.core.engine.DigitalTwinEngine;
 import org.example.domain.model.Surgery;
+import org.example.dt.OperatingRoomDigitalTwin;
 import org.example.dt.PatientDigitalTwin;
 import org.example.dt.SurgeryDigitalTwin;
 import org.example.dt.VSMDigitalTwin;
+import org.example.dt.property.OperatingRoomProperties;
 import org.example.dt.property.PatientProperties;
 import org.example.repositoryMySql.SurgeryDataAccess;
 import org.example.repositoryMySql.SurgeryDtDataAccess;
@@ -14,6 +16,7 @@ import org.example.utils.MqttPropertiesConfig;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) {
@@ -33,9 +36,12 @@ public class Main {
                 digitalTwinEngine.addDigitalTwin(surgeryDT, true);
             }
 
+            DigitalTwin orDT = new OperatingRoomDigitalTwin("or_1", MqttPropertiesConfig.getDefault(), HttpConnectionConfig.getWithPort(8070), new OperatingRoomProperties("sala1", new HashMap<>())).getDigitalTwin();
+
             // Directly start when you add it passing a second boolean value = true
             digitalTwinEngine.addDigitalTwin(patient, true);
             digitalTwinEngine.addDigitalTwin(vsm, true);
+            digitalTwinEngine.addDigitalTwin(orDT, true);
 
         }catch (Exception e){
             e.printStackTrace();
