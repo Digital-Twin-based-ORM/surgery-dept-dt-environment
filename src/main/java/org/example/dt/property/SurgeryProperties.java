@@ -18,9 +18,9 @@ public class SurgeryProperties extends InternalProperties {
     private final String reason;
     private final String category;
     private final String code;
-    private final LocalDateTime creationTimestamp;
+    private final String creationTimestamp;
 
-    public SurgeryProperties(String reason, String category, String code, LocalDateTime creationTimestamp) {
+    public SurgeryProperties(String reason, String category, String code, String creationTimestamp) {
         this.reason = reason;
         this.category = category;
         this.code = code;
@@ -44,7 +44,7 @@ public class SurgeryProperties extends InternalProperties {
         return code;
     }
 
-    public LocalDateTime getCreationTimestamp() {
+    public String getCreationTimestamp() {
         return creationTimestamp;
     }
 }

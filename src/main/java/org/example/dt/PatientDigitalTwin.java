@@ -32,8 +32,8 @@ public class PatientDigitalTwin {
 
         HttpDigitalAdapter httpDigitalAdapter = new HttpDigitalAdapter(config, digitalTwin);
 
-        MqttPatientDigitalAdapter builderDigitalaAdapter = new MqttPatientDigitalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDT);
-        MqttDigitalAdapter mqttDigitalAdapter = builderDigitalaAdapter.build(idDT + "-mqtt-pa");
+        MqttPatientDigitalAdapter builderDigitalAdapter = new MqttPatientDigitalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDT);
+        MqttDigitalAdapter mqttDigitalAdapter = builderDigitalAdapter.build(idDT + "-mqtt-pa");
 
         // Physical Adapter with Configuration
         digitalTwin.addPhysicalAdapter(mqttPhysicalAdapter);

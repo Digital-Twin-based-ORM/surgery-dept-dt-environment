@@ -22,14 +22,18 @@ import org.example.dt.property.InternalProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static org.example.physicalAdapter.MqttSurgeryPhysicalAdapter.*;
 import static org.example.utils.GlobalValues.*;
 
+@SuppressWarnings("unchecked")
 public class SurgeryShadowingFunction extends AbstractShadowing{
     private static final Logger logger = LoggerFactory.getLogger(SurgeryShadowingFunction.class);
     private final Map<SurgeryEvents, Long> eventsTimestamps = new HashMap<>();
@@ -115,17 +119,23 @@ public class SurgeryShadowingFunction extends AbstractShadowing{
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
         if (physicalAssetEventWldtEvent != null) {
             String eventKey = physicalAssetEventWldtEvent.getPhysicalEventKey();
             long timestamp = physicalAssetEventWldtEvent.getCreationTimestamp();
             logger.info("Event notified... " + eventKey);
+
             // based on the event change the appropriate property: if something strange occurs generate an anomaly (an event not registered for example)
             switch (eventKey) {
                 case SURGERY_EVENT_KEY -> {
+                    logger.info("Surgery event notified... " + eventKey);
                     SurgeryEvents event = (SurgeryEvents) physicalAssetEventWldtEvent.getBody();
+                    try {
+                        checkIfOperationStarted(event, timestamp);
+                    } catch (WldtDigitalTwinStatePropertyException e) {
+                        throw new RuntimeException(e);
+                    }
                     this.updateSurgeryEvents(event, timestamp);
                     try {
                         super.updateProperty(LAST_EVENT_KEY, event.getName());
@@ -180,8 +190,6 @@ public class SurgeryShadowingFunction extends AbstractShadowing{
                     }
                 }
             }
-
-
         }
     }
 
@@ -227,5 +235,43 @@ public class SurgeryShadowingFunction extends AbstractShadowing{
         eventsTimestamps.replace(event, timestamp);
         logger.info("The new events set is: " + eventsTimestamps);
         logger.info("Update state to... " + event);
+    }
+
+    private void checkIfOperationStarted(SurgeryEvents event, long timestamp) throws WldtDigitalTwinStatePropertyException {
+        if(event.equals(SurgeryEvents.StCh)) {
+            Optional<DigitalTwinStateProperty<?>> programmedDatePropertyOpt = digitalTwinStateManager.getDigitalTwinState().getProperty(PROGRAMMED_DATE_KEY);
+            if(programmedDatePropertyOpt.isPresent()) {
+                DigitalTwinStateProperty<String> programmedDateProperty = (DigitalTwinStateProperty<String>) programmedDatePropertyOpt.get();
+                String dateTime = programmedDateProperty.getValue();
+                LocalDateTime triggerTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), TimeZone.getDefault().toZoneId());
+                // M10
+                long startTimeTardiness = Duration.between(LocalDateTime.parse(dateTime), triggerTime).getSeconds();
+                // todo send delay to dep dt
+                System.out.println(startTimeTardiness);
+            }
+        }
+    }
+
+    private void updateKPI() {
+        if(eventsTimestamps.get(SurgeryEvents.PzPr) > 0L) {
+            // M15
+            long tAnest = eventsTimestamps.get(SurgeryEvents.PzPr) - eventsTimestamps.get(SurgeryEvents.StAnest);
+            System.out.println(tAnest / 1000);
+        }
+        if(eventsTimestamps.get(SurgeryEvents.EndCh) > 0L) {
+            // M14
+            long tChir = eventsTimestamps.get(SurgeryEvents.EndCh) - eventsTimestamps.get(SurgeryEvents.StCh);
+            System.out.println(tChir / 1000);
+            if(eventsTimestamps.get(SurgeryEvents.OutSO) > 0L) {
+                // M15
+                long touchTime = eventsTimestamps.get(SurgeryEvents.OutSO) - eventsTimestamps.get(SurgeryEvents.StAnest);
+                System.out.println(touchTime / 1000);
+                // M26
+                long valueAddedTimeDen = eventsTimestamps.get(SurgeryEvents.OutSO) - eventsTimestamps.get(SurgeryEvents.InSO);
+                double valueAddedTime = (double) tChir / valueAddedTimeDen;
+            }
+        }
+        //TODO update aggregat dep
+        
     }
 }

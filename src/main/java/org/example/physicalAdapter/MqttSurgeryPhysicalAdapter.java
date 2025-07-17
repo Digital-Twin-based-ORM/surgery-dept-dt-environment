@@ -10,7 +10,7 @@ import org.example.domain.model.SurgeryEvents;
 
 import java.time.LocalDateTime;
 
-public class MqttSurgeryPhysicalAdapter {
+public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
     public final static String PRIORITY_KEY = "priority";
     public final static String STATUS_KEY = "status";
@@ -26,8 +26,8 @@ public class MqttSurgeryPhysicalAdapter {
     public final static String PROGRAMMED_IN_KEY = "programmedIn";
     public final static String EXECUTED_IN_KEY = "executedIn";
 
-    public String baseTopic = "";
-    MqttPhysicalAdapterConfigurationBuilder builder;
+    private String baseTopic = "";
+    private final MqttPhysicalAdapterConfigurationBuilder builder;
 
     public MqttSurgeryPhysicalAdapter(String idDT, String host, Integer port) throws MqttPhysicalAdapterConfigurationException {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
@@ -48,34 +48,21 @@ public class MqttSurgeryPhysicalAdapter {
         this.addStringEvent(PROGRAMMED_IN_KEY);
         this.addStringEvent(EXECUTED_IN_KEY);
 
-
-        this.addLocalDateTimeProperty(PROGRAMMED_DATE_KEY, "");
-        this.addLocalDateTimeProperty(EXECUTION_START_KEY, "");
-        this.addLocalDateTimeProperty(EXECUTION_END_KEY, "");
-        this.addLocalDateTimeProperty(SURGERY_INCISION_KEY, "");
-        this.addLocalDateTimeProperty(SURGERY_SUTURE_KEY, "");
+        this.addStringProperty(PROGRAMMED_DATE_KEY, ""); // String.valueOf(LocalDateTime.now()) for test
+        this.addStringProperty(EXECUTION_START_KEY, "");
+        this.addStringProperty(EXECUTION_END_KEY, "");
+        this.addStringProperty(SURGERY_INCISION_KEY, "");
+        this.addStringProperty(SURGERY_SUTURE_KEY, "");
     }
 
-    void addStringProperty(String key, String initialValue) throws MqttPhysicalAdapterConfigurationException {
-        // Configuring the mqtt physical and http digital adapter
-        // i -> getJsonField(i, STATUS_KEY) alternative with json
-        builder.addPhysicalAssetPropertyAndTopic(key, initialValue, baseTopic + key, String::toString);
+
+    @Override
+    public String getBaseTopic() {
+        return baseTopic;
     }
 
-    void addStringEvent(String key) throws MqttPhysicalAdapterConfigurationException {
-        // Configuring the mqtt physical and http digital adapter
-        // i -> getJsonField(i, STATUS_KEY) alternative with json
-        builder.addPhysicalAssetEventAndTopic(key, "text/plain", baseTopic + key, String::toString);
+    @Override
+    public MqttPhysicalAdapterConfigurationBuilder getBuilder() {
+        return builder;
     }
-
-    void addLocalDateTimeProperty(String key, String initialValue) throws MqttPhysicalAdapterConfigurationException {
-        // Configuring the mqtt physical and http digital adapter
-        // LocalDateTime.parse(Objects.requireNonNull(getJsonField(i, PROGRAMMED_DATE_KEY))) alternative with json
-        builder.addPhysicalAssetPropertyAndTopic(key, initialValue, baseTopic + key, LocalDateTime::parse);
-    }
-
-    public MqttPhysicalAdapter build(String id) throws MqttPhysicalAdapterConfigurationException, MqttException {
-        return new MqttPhysicalAdapter(id, builder.build());
-    }
-
 }
