@@ -20,6 +20,12 @@ public abstract class AbstractMqttPhysicalAdapter {
         getBuilder().addPhysicalAssetEventAndTopic(key, "text/plain", getBaseTopic() + key, String::toString);
     }
 
+    void addLongEvent(String key) throws MqttPhysicalAdapterConfigurationException {
+        // Configuring the mqtt physical and http digital adapter
+        // i -> getJsonField(i, STATUS_KEY) alternative with json
+        getBuilder().addPhysicalAssetEventAndTopic(key, "text/plain", getBaseTopic() + key, Long::getLong);
+    }
+
     void addLocalDateTimeProperty(String key, String initialValue) throws MqttPhysicalAdapterConfigurationException {
         // Configuring the mqtt physical and http digital adapter
         // LocalDateTime.parse(Objects.requireNonNull(getJsonField(i, PROGRAMMED_DATE_KEY))) alternative with json
