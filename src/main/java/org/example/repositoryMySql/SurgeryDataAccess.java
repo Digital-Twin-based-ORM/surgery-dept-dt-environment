@@ -1,5 +1,6 @@
 package org.example.repositoryMySql;
 
+import org.example.domain.model.PriorityClass;
 import org.example.domain.model.Surgery;
 
 import java.sql.*;
@@ -173,7 +174,7 @@ public class SurgeryDataAccess {
 
                 System.out.printf("ID: %s, Arrival: %s, Programmed: %s, Admission: %s, Priority: %d%n",
                         id, arrivalDate, programmedDate, admissionTime, priority);
-                 surgeries.add(new Surgery(id, arrivalDate, programmedDate, admissionTime, priority, estimated_time));
+                 surgeries.add(new Surgery(id, arrivalDate, programmedDate, admissionTime, LocalDateTime.now(), PriorityClass.values()[priority], estimated_time));
             }
         }
         return surgeries;
