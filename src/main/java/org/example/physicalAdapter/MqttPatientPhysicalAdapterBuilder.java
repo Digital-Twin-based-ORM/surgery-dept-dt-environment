@@ -42,5 +42,4 @@ public class MqttPatientPhysicalAdapterBuilder {
         adapter = new MqttPhysicalAdapter(id, builder.build());
         return adapter;
     }
-
 }

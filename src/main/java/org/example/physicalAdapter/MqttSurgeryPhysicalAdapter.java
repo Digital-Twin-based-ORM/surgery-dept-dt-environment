@@ -25,6 +25,8 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
     public final static String SURGERY_SUTURE_KEY = "suture_timestamp";
     public final static String PROGRAMMED_IN_KEY = "programmedIn";
     public final static String EXECUTED_IN_KEY = "executedIn";
+    public final static String ADMISSION_TIME_KEY = "admissionTime";
+    public final static String ARRIVAL_TIME_KEY = "arrivalTime";
 
     private String baseTopic = "";
     private final MqttPhysicalAdapterConfigurationBuilder builder;
@@ -53,6 +55,8 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
         this.addStringProperty(EXECUTION_END_KEY, "");
         this.addStringProperty(SURGERY_INCISION_KEY, "");
         this.addStringProperty(SURGERY_SUTURE_KEY, "");
+        this.addStringProperty(ADMISSION_TIME_KEY, "");
+        this.addStringProperty(ARRIVAL_TIME_KEY, "");
     }
 
 

@@ -1,9 +1,9 @@
 package org.example.digitalAdapter.configuration;
 
-public class SurgeriesAggregatorConfiguration {
+public class SurgeryDepConfiguration {
     private final String idDigitalTwin;
 
-    public SurgeriesAggregatorConfiguration(String idDigitalTwin) {
+    public SurgeryDepConfiguration(String idDigitalTwin) {
         this.idDigitalTwin = idDigitalTwin;
     }
 

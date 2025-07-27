@@ -6,8 +6,11 @@ import it.wldt.adapter.physical.PhysicalAssetRelationship;
 import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceCreatedWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceDeletedWldtEvent;
+import it.wldt.core.state.DigitalTwinStateProperty;
 import it.wldt.core.state.DigitalTwinStateRelationshipInstance;
 import it.wldt.exception.WldtDigitalTwinStateException;
+import it.wldt.exception.WldtDigitalTwinStatePropertyException;
+import org.example.domain.model.DailySlot;
 import org.example.dt.property.OperatingRoomProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.example.dt.property.OperatingRoomProperties.DAILY_SLOTS;
 import static org.example.physicalAdapter.MqttOperatingRoomPhysicalAdapter.*;
 import static org.example.utils.GlobalValues.BELONGS_TO_NAME;
 import static org.example.utils.GlobalValues.BELONGS_TO_TYPE;
@@ -83,6 +87,7 @@ public class OperatingRoomShadowing extends AbstractShadowing {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
         if (physicalAssetEventWldtEvent != null) {
@@ -94,8 +99,22 @@ public class OperatingRoomShadowing extends AbstractShadowing {
             switch (eventKey) {
                 case DISINFECTION_TERMINATED -> {
                     try {
-                        updateProperty(LAST_DISINFECTION, "" + physicalAssetEventWldtEvent.getCreationTimestamp());
+                        super.updateProperty(LAST_DISINFECTION, "" + physicalAssetEventWldtEvent.getCreationTimestamp());
                     } catch (WldtDigitalTwinStateException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                case ASSIGN_DAILY_SLOTS -> {
+                    // TODO do tests
+                    DailySlot slots = (DailySlot) physicalAssetEventWldtEvent.getBody();
+                    try {
+                        if(digitalTwinStateManager.getDigitalTwinState().getProperty(DAILY_SLOTS).isPresent()) {
+                            DigitalTwinStateProperty<?> slotsProperty = digitalTwinStateManager.getDigitalTwinState().getProperty(DAILY_SLOTS).get();
+                            Map<String, DailySlot> dailySlots = (Map<String, DailySlot>) slotsProperty.getValue();
+                            dailySlots.put(slots.getDay().toString(), slots);
+                            super.updateProperty(DAILY_SLOTS, dailySlots);
+                        }
+                    } catch (WldtDigitalTwinStatePropertyException | WldtDigitalTwinStateException e) {
                         throw new RuntimeException(e);
                     }
                 }

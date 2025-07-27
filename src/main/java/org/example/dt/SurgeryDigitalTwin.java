@@ -7,9 +7,9 @@ import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationE
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.exception.*;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.example.digitalAdapter.SurgeriesAggregatorDigitalAdapter;
+import org.example.digitalAdapter.SurgeryDigitalAdapter;
 import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
-import org.example.digitalAdapter.configuration.SurgeriesAggregatorConfiguration;
+import org.example.digitalAdapter.configuration.SurgeryDepConfiguration;
 import org.example.dt.property.SurgeryProperties;
 import org.example.physicalAdapter.MqttSurgeryPhysicalAdapter;
 
@@ -36,7 +36,7 @@ public class SurgeryDigitalTwin {
 
         HttpDigitalAdapter httpDigitalAdapter = new HttpDigitalAdapter(config, digitalTwin);
 
-        SurgeriesAggregatorDigitalAdapter aggregatorDigitalAdapter = new SurgeriesAggregatorDigitalAdapter(idDT, new SurgeriesAggregatorConfiguration(idDT), new MQTTAdapterConfiguration("", "", ""));
+        SurgeryDigitalAdapter aggregatorDigitalAdapter = new SurgeryDigitalAdapter(idDT, new SurgeryDepConfiguration(idDT), new MQTTAdapterConfiguration("", "", ""));
 
         // Physical Adapter with Configuration
         digitalTwin.addPhysicalAdapter(mqttPhysicalAdapter);

@@ -8,6 +8,7 @@ import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfigurationBuilder;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import org.example.domain.model.DailySlot;
 import org.example.domain.model.SingleSlot;
+import org.example.utils.UtilsFunctions;
 
 import java.util.ArrayList;
 
@@ -34,24 +35,7 @@ public class MqttOperatingRoomPhysicalAdapter extends AbstractMqttPhysicalAdapte
         this.addStringEvent(NOW_AVAILABLE);
         this.addStringEvent(BUSY);
 
-        this.builder.addPhysicalAssetEventAndTopic(ASSIGN_DAILY_SLOTS, "text/plain", getBaseTopic() + ASSIGN_DAILY_SLOTS, content -> {
-            ArrayList<SingleSlot> dailySlots = new ArrayList<>();
-            JsonObject json = stringToJsonObjectGson(content);
-            assert json != null;
-            String day = json.get("day").getAsString();
-            JsonArray slots = json.getAsJsonArray("slots");
-            for(JsonElement slot : slots.asList()) {
-                JsonObject slotObj = slot.getAsJsonObject();
-                dailySlots.add(
-                    new SingleSlot(
-                        slotObj.get("startSlot").getAsString(),
-                        slotObj.get("endSlot").getAsString(),
-                        slotObj.get("procedure").getAsString()
-                    )
-                );
-            }
-            return new DailySlot(day, dailySlots);
-        });
+        this.builder.addPhysicalAssetEventAndTopic(ASSIGN_DAILY_SLOTS, "text/plain", getBaseTopic() + ASSIGN_DAILY_SLOTS, UtilsFunctions::getDailySlotsFromJson);
     }
 
     @Override

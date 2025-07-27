@@ -11,6 +11,9 @@ import java.util.Map;
 
 public class OperatingRoomProperties extends InternalProperties {
 
+    public static final String DAILY_SLOTS = "dailySlots";
+    public static final String OPERATING_ROOM_NAME = "name";
+
     private final String name;
 
     private final Map<String, DailySlot> procedureSlots;
@@ -22,8 +25,8 @@ public class OperatingRoomProperties extends InternalProperties {
         ArrayList<SingleSlot> slots = new ArrayList<>();
         slots.add(slot);
         procedureSlots.put(LocalDate.now().toString(), new DailySlot(LocalDate.now().toString(), slots));
-        this.addProperty(new PhysicalAssetProperty<>("dailySlots", this.procedureSlots));
-        this.addProperty(new PhysicalAssetProperty<>("name", this.procedureSlots));
+        this.addProperty(new PhysicalAssetProperty<>(DAILY_SLOTS, this.procedureSlots));
+        this.addProperty(new PhysicalAssetProperty<>(OPERATING_ROOM_NAME, this.procedureSlots));
     }
 
     public String getName() {

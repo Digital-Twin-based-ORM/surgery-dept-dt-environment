@@ -34,8 +34,10 @@ import static org.example.physicalAdapter.MqttSurgeryPhysicalAdapter.*;
 import static org.example.utils.GlobalValues.*;
 
 @SuppressWarnings("unchecked")
-public class SurgeryShadowingFunction extends AbstractShadowing{
+public class SurgeryShadowingFunction extends AbstractShadowing {
     private static final Logger logger = LoggerFactory.getLogger(SurgeryShadowingFunction.class);
+
+    //TODO each event like a property?
     private final Map<SurgeryEvents, Long> eventsTimestamps = new HashMap<>();
     private final List<String> writeOnceProperties = List.of(PROGRAMMED_DATE_KEY, EXECUTION_START_KEY, EXECUTION_END_KEY, SURGERY_INCISION_KEY, SURGERY_SUTURE_KEY);
     private PhysicalAssetRelationship<String> patientRelationship = null;
@@ -263,7 +265,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing{
             long tChir = eventsTimestamps.get(SurgeryEvents.EndCh) - eventsTimestamps.get(SurgeryEvents.StCh);
             System.out.println(tChir / 1000);
             if(eventsTimestamps.get(SurgeryEvents.OutSO) > 0L) {
-                // M15
+                // M17
                 long touchTime = eventsTimestamps.get(SurgeryEvents.OutSO) - eventsTimestamps.get(SurgeryEvents.StAnest);
                 System.out.println(touchTime / 1000);
                 // M26

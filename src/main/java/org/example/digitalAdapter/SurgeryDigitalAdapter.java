@@ -7,19 +7,19 @@ import it.wldt.core.state.DigitalTwinStateEvent;
 import it.wldt.core.state.DigitalTwinStateEventNotification;
 import it.wldt.exception.EventBusException;
 import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
-import org.example.digitalAdapter.configuration.SurgeriesAggregatorConfiguration;
+import org.example.digitalAdapter.configuration.SurgeryDepConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-public class SurgeriesAggregatorDigitalAdapter extends DigitalAdapter<SurgeriesAggregatorConfiguration> implements AbstractMQTTDigitalAdapter {
+public class SurgeryDigitalAdapter extends DigitalAdapter<SurgeryDepConfiguration> implements AbstractMQTTDigitalAdapter {
 
-    private static final Logger logger = LoggerFactory.getLogger(SurgeriesAggregatorDigitalAdapter.class);
+    private static final Logger logger = LoggerFactory.getLogger(SurgeryDigitalAdapter.class);
     private final MQTTAdapterConfiguration mqttConfiguration;
 
-    public SurgeriesAggregatorDigitalAdapter(String id, SurgeriesAggregatorConfiguration configuration, MQTTAdapterConfiguration mqttConfiguration) {
+    public SurgeryDigitalAdapter(String id, SurgeryDepConfiguration configuration, MQTTAdapterConfiguration mqttConfiguration) {
         super(id, configuration);
         this.mqttConfiguration = mqttConfiguration;
     }
@@ -46,6 +46,7 @@ public class SurgeriesAggregatorDigitalAdapter extends DigitalAdapter<SurgeriesA
 
     @Override
     public void onDigitalTwinSync(DigitalTwinState digitalTwinState) {
+        // TODO notify SURGERY_CREATED
         /*
         try {
             Optional<DigitalTwinStateProperty<?>> idDtProperty = digitalTwinState.getProperty("id");
