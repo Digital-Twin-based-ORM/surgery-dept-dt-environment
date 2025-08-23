@@ -1,12 +1,12 @@
 package org.example.domain.model;
 
+import java.time.Duration;
 import java.time.LocalTime;
 
 public class SingleSlot {
 
     private String startSlot;
     private String endSlot;
-
     private String procedure;
 
     public SingleSlot(String startSlot, String endSlot, String procedure) {
@@ -39,5 +39,51 @@ public class SingleSlot {
             return true;
         }
         return false;
+    }
+
+    public float getHourDuration() {
+        LocalTime start = LocalTime.parse(this.startSlot);
+        LocalTime end = LocalTime.parse(this.endSlot);
+        return Duration.between(start, end).toHours();
+    }
+
+    public float getMinutesDuration() {
+        LocalTime start = LocalTime.parse(this.startSlot);
+        LocalTime end = LocalTime.parse(this.endSlot);
+        return Duration.between(start, end).toMinutes();
+    }
+
+    public boolean isSurgeryExecutedInSlot(LocalTime start, LocalTime end) {
+        LocalTime thisStart = LocalTime.parse(this.startSlot);
+        LocalTime thisEnd = LocalTime.parse(this.endSlot);
+        return (start.isBefore(thisStart) && end.isAfter(thisEnd));
+    }
+
+    public boolean isSurgeryProgrammed(LocalTime programmedStart) {
+        LocalTime thisStart = LocalTime.parse(this.startSlot);
+        LocalTime thisEnd = LocalTime.parse(this.endSlot);
+        return programmedStart.equals(thisStart) || (programmedStart.isAfter(thisStart) && programmedStart.isBefore(thisEnd));
+    }
+
+    public float getOverTime(LocalTime endSurgeryTime) {
+        LocalTime thisEnd = LocalTime.parse(this.endSlot);
+        if(endSurgeryTime.isAfter(thisEnd)) {
+            return Duration.between(thisEnd, endSurgeryTime).toMinutes();
+        } else {
+            return 0;
+        }
+    }
+
+    public float getUnderUtilizationTime(LocalTime endSurgeryTime) {
+        LocalTime thisEnd = LocalTime.parse(this.endSlot);
+        if(endSurgeryTime.isBefore(thisEnd)) {
+            return Duration.between(endSurgeryTime, thisEnd).toMinutes();
+        } else {
+            return 0;
+        }
+    }
+
+    public LocalTime getLocalTimeStartSlot() {
+        return LocalTime.parse(this.startSlot);
     }
 }
