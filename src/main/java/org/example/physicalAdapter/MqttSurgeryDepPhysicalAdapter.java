@@ -1,10 +1,13 @@
 package org.example.physicalAdapter;
 
+import com.google.gson.JsonObject;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfigurationBuilder;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.example.businessLayer.adapter.OperatingRoomDailySlot;
+import org.example.businessLayer.adapter.SurgeryKpiNotification;
 import org.example.domain.model.*;
 import org.example.utils.UtilsFunctions;
 
@@ -18,11 +21,27 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
     MqttPhysicalAdapterConfigurationBuilder builder;
 
+    public static final String M1 = "m1";
+    public static final String M2 = "m2";
+    public static final String M3 = "m3";
+    public static final String M9 = "m9";
     public static final String M10 = "m10";
+    public static final String M11 = "m11";
+    public static final String M12 = "m12";
+    public static final String M13 = "m13";
     public static final String M14 = "m14";
     public static final String M15 = "m15";
+    public static final String M16 = "m16";
     public static final String M17 = "m17";
+    public static final String M18 = "m18";
+    public static final String M19 = "m19";
+    public static final String M20 = "m20";
+    public static final String M21 = "m21";
+    public static final String M22 = "m22";
+    public static final String M23 = "m23";
+    public static final String M24 = "m24";
     public static final String M26 = "m26";
+    public static final String M29 = "m29";
 
     public static final String SLOT_SET = "slotset";
     public static final String WORKING_DAY_TERMINATED = "endWorkDay";
@@ -39,13 +58,18 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
         this.baseTopic = "anylogic/id/dep/" + idDT + "/";
 
-        this.addLongEvent(M10);
-        this.addLongEvent(M14);
-        this.addLongEvent(M15);
-        this.addLongEvent(M17);
-        this.addLongEvent(M26);
+        this.addSurgeryKpiEventTopic(M10);
+        this.addSurgeryKpiEventTopic(M14);
+        this.addSurgeryKpiEventTopic(M15);
+        this.addSurgeryKpiEventTopic(M17);
+        this.addSurgeryKpiEventTopic(M26);
 
-        this.builder.addPhysicalAssetEventAndTopic(SLOT_SET, "text/plain", this.baseTopic + SLOT_SET, UtilsFunctions::getDailySlotsFromJson);
+        this.builder.addPhysicalAssetEventAndTopic(SLOT_SET, "text/plain", this.baseTopic + SLOT_SET, content -> {
+            JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(content);
+            String operatingRoomId = jsonObject.get("operatingRoomId").getAsString();
+            DailySlot slots = UtilsFunctions.getDailySlotsFromJson(jsonObject);
+            return new OperatingRoomDailySlot(operatingRoomId, slots);
+        });
         this.builder.addPhysicalAssetEventAndTopic(NEW_SURGERY_EVENT, "text/plain", this.baseTopic + NEW_SURGERY_EVENT, content -> {
             SurgeryEvents event = SurgeryEvents.valueOf(getJsonField(content, "event"));
             String id = getJsonField(content, "idSurgery");
@@ -77,6 +101,14 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
         this.addStringEvent(WORKING_DAY_STARTED);
         this.addStringEvent(WORKING_DAY_TERMINATED);
+    }
+
+    public void addSurgeryKpiEventTopic(String kpi) throws MqttPhysicalAdapterConfigurationException {
+        this.builder.addPhysicalAssetEventAndTopic(kpi, "text/plain", this.baseTopic + kpi, it -> {
+            JsonObject json = UtilsFunctions.stringToJsonObjectGson(it);
+            assert json != null;
+            return new SurgeryKpiNotification(json.get("surgeryId").getAsString(), json.get("value").getAsFloat());
+        });
     }
 
     public MqttPhysicalAdapter build(String id) throws MqttPhysicalAdapterConfigurationException, MqttException {
