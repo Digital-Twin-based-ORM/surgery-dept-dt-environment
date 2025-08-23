@@ -10,11 +10,11 @@ public class PatientProperties extends InternalProperties {
 
     private final PatientNominative patientNominative;
     private final String gender;
-    private final LocalDate birthDate;
+    private final String birthDate;
 
     public PatientProperties(String name, String surname, String gender, LocalDate birthDate) {
         this.gender = gender;
-        this.birthDate = birthDate;
+        this.birthDate = birthDate.toString();
         this.patientNominative = new PatientNominative(name, surname);
 
         this.addProperty(new PhysicalAssetProperty<>("name", this.patientNominative));
@@ -31,6 +31,6 @@ public class PatientProperties extends InternalProperties {
     }
 
     public LocalDate getBirthDate() {
-        return birthDate;
+        return LocalDate.parse(birthDate);
     }
 }
