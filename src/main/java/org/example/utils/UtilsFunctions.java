@@ -43,9 +43,18 @@ public class UtilsFunctions {
     }
 
     public static DailySlot getDailySlotsFromJson(String content) {
-        ArrayList<SingleSlot> dailySlots = new ArrayList<>();
         JsonObject json = stringToJsonObjectGson(content);
         assert json != null;
+        return findDailySlots(json);
+    }
+
+    public static DailySlot getDailySlotsFromJson(JsonObject json) {
+        assert json != null;
+        return findDailySlots(json);
+    }
+
+    private static DailySlot findDailySlots(JsonObject json) {
+        ArrayList<SingleSlot> dailySlots = new ArrayList<>();
         String day = json.get("day").getAsString();
         JsonArray slots = json.getAsJsonArray("slots");
         for(JsonElement slot : slots.asList()) {
@@ -60,5 +69,4 @@ public class UtilsFunctions {
         }
         return new DailySlot(day, dailySlots);
     }
-
 }
