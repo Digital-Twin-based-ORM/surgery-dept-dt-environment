@@ -1,14 +1,13 @@
 package org.example.physicalAdapter;
 
-import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfigurationBuilder;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.example.domain.model.PriorityClass;
+import org.example.domain.model.SurgeryEventInTime;
 import org.example.domain.model.SurgeryEvents;
 
-import java.time.LocalDateTime;
+import static org.example.utils.UtilsFunctions.getJsonField;
 
 public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
@@ -33,7 +32,12 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
     public MqttSurgeryPhysicalAdapter(String idDT, String host, Integer port) throws MqttPhysicalAdapterConfigurationException {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
-        builder.addPhysicalAssetEventAndTopic(SURGERY_EVENT_KEY, "text/plain", "anylogic/id/surgery/" + idDT + "/" + SURGERY_EVENT_KEY, SurgeryEvents::valueOf);
+        builder.addPhysicalAssetEventAndTopic(SURGERY_EVENT_KEY, "text/plain", "anylogic/id/surgery/" + idDT + "/" + SURGERY_EVENT_KEY, content -> {
+            SurgeryEvents event = SurgeryEvents.valueOf(getJsonField(content, "event"));
+            String timestamp = getJsonField(content, "timestamp");
+            return new SurgeryEventInTime(idDT, event, timestamp);
+        });
+
         builder.addPhysicalAssetPropertyAndTopic(PRIORITY_KEY, "", "anylogic/id/surgery/" + idDT + "/" + PRIORITY_KEY, i -> {
             if(i.equals(PriorityClass.A.toString()) || i.equals(PriorityClass.B.toString()) || i.equals(PriorityClass.C.toString()) || i.equals(PriorityClass.D.toString()))
                 return i;
