@@ -154,7 +154,11 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
     }
 
     private void initializeKpiList() {
-        this.floatKpi.keySet().addAll(List.of(M1, M2, M3, M9, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19, M20, M21, M22, M23, M24, M26, M29));
+        this.floatKpi = new HashMap<>();
+        List<String> kpi = List.of(M1, M2, M3, M9, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19, M20, M21, M22, M23, M24, M26, M29);
+        kpi.forEach(i -> {
+            floatKpi.put(i, 0f);
+        });
     }
 
     private void updateKpiOnSurgery(String surgeryId, String kpi, Float value) {

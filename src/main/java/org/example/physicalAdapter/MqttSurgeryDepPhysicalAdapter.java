@@ -70,12 +70,8 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
             DailySlot slots = UtilsFunctions.getDailySlotsFromJson(jsonObject);
             return new OperatingRoomDailySlot(operatingRoomId, slots);
         });
-        this.builder.addPhysicalAssetEventAndTopic(NEW_SURGERY_EVENT, "text/plain", this.baseTopic + NEW_SURGERY_EVENT, content -> {
-            SurgeryEvents event = SurgeryEvents.valueOf(getJsonField(content, "event"));
-            String id = getJsonField(content, "idSurgery");
-            Long timestamp = Long.getLong(getJsonField(content, "timestamp"));
-            return new SurgeryEventInTime(id, event, timestamp);
-        });
+        this.builder.addPhysicalAssetEventAndTopic(NEW_SURGERY_EVENT, "text/plain", this.baseTopic + NEW_SURGERY_EVENT, UtilsFunctions::surgeryEventInTimeFromJson);
+
         this.builder.addPhysicalAssetEventAndTopic(SURGERY_CREATED, "text/plain", this.baseTopic + SURGERY_CREATED, content -> {
             String id = getJsonField(content, "idSurgery");
             LocalDateTime admissionDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "admissionDate")));
