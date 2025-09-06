@@ -1,4 +1,4 @@
-package org.example.repositoryMySql;
+package org.example.infrastructureLayer.repositoryMySql;
 
 import org.example.domain.model.PriorityClass;
 import org.example.domain.model.Surgery;
@@ -24,6 +24,7 @@ public class SurgeryDataAccess {
     private static final String COL_PRIORITY = "priority";
     private static final String COL_ESTIMATED_TIME = "estimated_time";
     private static final String COL_PATIENT_ID = "patient_id";
+    private static final String COL_SURGERY_ID = "surgery_id";
 
     public static void main(String[] args) {
 
@@ -44,7 +45,8 @@ public class SurgeryDataAccess {
                     LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,0,40)),
                     0,
                     120,
-                    "patient_1");
+                    "patient_1",
+                    "surgery_1");
             insertSimulationData(
                     conn,
                     2,
@@ -53,7 +55,8 @@ public class SurgeryDataAccess {
                     LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,0,20)),
                     0,
                     120,
-                    "patient_2");
+                    "patient_2",
+                    "surgery_1");
 
             // 5. Retrieve and display data
             System.out.println("\nRetrieving simulation data:");
@@ -108,7 +111,8 @@ public class SurgeryDataAccess {
                 COL_ADMISSION_TIME + " DATETIME," + // Changed to DATETIME for better time representation
                 COL_PRIORITY + " INT," +
                 COL_ESTIMATED_TIME + " INT," +
-                COL_PATIENT_ID + " TEXT" +
+                COL_PATIENT_ID + " TEXT," +
+                COL_SURGERY_ID + " TEXT" +
                 ")";
         try (PreparedStatement pstmt = conn.prepareStatement(createTableSQL)) {
             pstmt.executeUpdate();
@@ -128,10 +132,10 @@ public class SurgeryDataAccess {
      * @throws SQLException If a database access error occurs.
      */
     private static void insertSimulationData(Connection conn, int id, LocalDateTime arrivalDate,
-                                             LocalDateTime programmedDate, LocalDateTime admissionTime, int priority, int estimatedTime, String patientId) throws SQLException {
+                                             LocalDateTime programmedDate, LocalDateTime admissionTime, int priority, int estimatedTime, String patientId, String surgery_id) throws SQLException {
         String insertSQL = "INSERT INTO " + TABLE_NAME + " (" +
                 COL_ID + ", " + COL_ARRIVAL_DATE + ", " + COL_PROGRAMMED_DATE + ", " +
-                COL_ADMISSION_TIME + ", " + COL_PRIORITY + ", " + COL_ESTIMATED_TIME + ", " + COL_PATIENT_ID + ") VALUES (?, ?, ?, ?, ?, ?, ?)";
+                COL_ADMISSION_TIME + ", " + COL_PRIORITY + ", " + COL_ESTIMATED_TIME + ", " + COL_PATIENT_ID + ", " + COL_SURGERY_ID + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
             pstmt.setInt(1, id);
             pstmt.setTimestamp(2, Timestamp.valueOf(arrivalDate)); // Convert LocalDate to java.sql.Date
@@ -140,6 +144,7 @@ public class SurgeryDataAccess {
             pstmt.setInt(5, priority);
             pstmt.setInt(6, estimatedTime);
             pstmt.setString(7, patientId);
+            pstmt.setString(8, surgery_id);
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
