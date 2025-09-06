@@ -31,59 +31,37 @@ public class KpiCalculatorTest {
         LocalDateTime programmed1_1 = LocalDateTime.of(LocalDate.now(), LocalTime.parse("09:00:00"));
         LocalDateTime startTime1_1 = LocalDateTime.of(LocalDate.now(), LocalTime.parse("09:30:00"));
         surgery1_1.setProgrammedDate(programmed1_1);
-        surgery1_1.addTimestamp(SurgeryEvents.StCh, startTime1_1.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery1_1.addTimestamp(SurgeryEvents.InSO, startTime1_1.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery1_1.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("10:30:00")).atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
+        surgery1_1.addTimestamp(SurgeryEvents.StCh, startTime1_1.toString());
+        surgery1_1.addTimestamp(SurgeryEvents.InSO, startTime1_1.toString());
+        surgery1_1.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("10:30:00")).toString());
 
         /** SURGERY 2 **/
         Surgery surgery1_2 = new Surgery("2", PriorityClass.A);
         LocalDateTime programmed1_2 = LocalDateTime.of(LocalDate.now(), LocalTime.parse("11:00:00"));
         surgery1_2.setProgrammedDate(programmed1_2);
-        surgery1_2.addTimestamp(SurgeryEvents.InSO, programmed1_2.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery1_2.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("11:45:00")).atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
+        surgery1_2.addTimestamp(SurgeryEvents.InSO, programmed1_2.toString());
+        surgery1_2.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("11:45:00")).toString());
 
         /** SURGERY 3 **/
         Surgery surgery2_1 = new Surgery("3", PriorityClass.A);
         LocalDateTime programmed2_1 = LocalDateTime.of(LocalDate.now(), LocalTime.parse("14:15:00"));
         surgery2_1.setProgrammedDate(programmed2_1);
-        surgery2_1.addTimestamp(SurgeryEvents.InSO, programmed2_1.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery2_1.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("15:00:00")).atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
+        surgery2_1.addTimestamp(SurgeryEvents.InSO, programmed2_1.toString());
+        surgery2_1.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("15:00:00")).toString());
 
         /** SURGERY 4 **/
         Surgery surgery2_2 = new Surgery("4", PriorityClass.A);
         LocalDateTime programmed2_2 = LocalDateTime.of(LocalDate.now(), LocalTime.parse("15:30:00"));
         surgery2_2.setProgrammedDate(programmed2_2);
-        surgery2_2.addTimestamp(SurgeryEvents.InSO, programmed2_2.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery2_2.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("16:20:00")).atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
+        surgery2_2.addTimestamp(SurgeryEvents.InSO, programmed2_2.toString());
+        surgery2_2.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("16:20:00")).toString());
 
         /** SURGERY 5 **/
         Surgery surgery2_3 = new Surgery("5", PriorityClass.A);
         LocalDateTime programmed2_3 = LocalDateTime.of(LocalDate.now(), LocalTime.parse("16:30:00"));
         surgery2_3.setProgrammedDate(programmed2_3);
-        surgery2_3.addTimestamp(SurgeryEvents.InSO, programmed2_3.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery2_3.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("17:00:00")).atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
+        surgery2_3.addTimestamp(SurgeryEvents.InSO, programmed2_3.toString());
+        surgery2_3.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("17:00:00")).toString());
 
         allSurgeries.add(surgery1_1);
         allSurgeries.add(surgery1_2);
@@ -126,12 +104,8 @@ public class KpiCalculatorTest {
         Surgery surgery = new Surgery("6", PriorityClass.A);
         LocalDateTime programmed = LocalDateTime.of(LocalDate.now(), LocalTime.parse("11:50:00"));
         surgery.setProgrammedDate(programmed);
-        surgery.addTimestamp(SurgeryEvents.InSO, programmed.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("12:10:00")).atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
+        surgery.addTimestamp(SurgeryEvents.InSO, programmed.toString());
+        surgery.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("12:10:00")).toString());
         allSurgeries.add(surgery);
         surgeriesExecuted.add(new SurgeryLocation("6", "1"));
         float value = kpiCalculator.M11();
@@ -148,12 +122,8 @@ public class KpiCalculatorTest {
     void testTurnOverTime() {
         Surgery surgery1 = new Surgery("1", PriorityClass.A);
         Surgery surgery2 = new Surgery("2", PriorityClass.A);
-        surgery1.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.now().atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
-        surgery2.addTimestamp(SurgeryEvents.InSO, LocalDateTime.now().plusMinutes(15).atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli());
+        surgery1.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.now().toString());
+        surgery2.addTimestamp(SurgeryEvents.InSO, LocalDateTime.now().plusMinutes(15).toString());
         Assertions.assertEquals(15, kpiCalculator.getTurnOverTime(surgery1, surgery2));
     }
 

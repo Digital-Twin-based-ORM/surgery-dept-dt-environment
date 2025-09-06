@@ -39,11 +39,11 @@ public class KpiCalculator {
             List<String> surgeriesID = surgeriesExecuted.stream().filter(i -> Objects.equals(i.operationRoomId(), idOperatingRoom)).map(SurgeryLocation::surgeryId).toList();
             List<Surgery> surgeries = allSurgeries.stream().filter(i -> surgeriesID.contains(i.getIdSurgery())).toList();
             for(Surgery surgery : surgeries) {
-                long outSO = surgery.getEventTimestamp(SurgeryEvents.OutSO);
-                long inSO = surgery.getEventTimestamp(SurgeryEvents.InSO);
-                if(outSO > 0 && inSO > 0) {
-                    LocalDateTime outSODateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(outSO), TimeZone.getDefault().toZoneId());
-                    LocalDateTime inSODateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(inSO), TimeZone.getDefault().toZoneId());
+                String outSO = surgery.getEventTimestamp(SurgeryEvents.OutSO);
+                String inSO = surgery.getEventTimestamp(SurgeryEvents.InSO);
+                if(!Objects.equals(outSO, "") && !Objects.equals(inSO, "")) {
+                    LocalDateTime outSODateTime = LocalDateTime.parse(outSO);
+                    LocalDateTime inSODateTime = LocalDateTime.parse(inSO);
                     timeExecution = timeExecution + (Duration.between(inSODateTime, outSODateTime).toMinutes());
                 }
             }
@@ -60,7 +60,7 @@ public class KpiCalculator {
         SingleSlot slot = slots.getSlots().getFirst();
         List<Surgery> surgeries = orderByProgrammedTime(getSurgeriesInSlot(surgeriesExecutedToday, slot));
         Surgery firstSurgeryOfTheDay = surgeries.getFirst();
-        LocalTime stCh = LocalDateTime.ofInstant(Instant.ofEpochMilli(firstSurgeryOfTheDay.getEventTimestamp(SurgeryEvents.StCh)), TimeZone.getDefault().toZoneId()).toLocalTime();
+        LocalTime stCh = LocalDateTime.parse(firstSurgeryOfTheDay.getEventTimestamp(SurgeryEvents.StCh)).toLocalTime();
         LocalTime programmedDate = firstSurgeryOfTheDay.getProgrammedDate().toLocalTime();
         System.out.println("STCH: " + stCh + " - programmed: " + programmedDate);
         return Duration.between(programmedDate, stCh).toMinutes();
@@ -143,7 +143,7 @@ public class KpiCalculator {
                 List<Surgery> surgeries = getSurgeriesInSlot(surgeriesExecutedToday, slot);
                 ArrayList<LocalTime> localTimes = new ArrayList<>(surgeries.stream()
                         .map(i -> i.getEventTimestamp(SurgeryEvents.OutSO))
-                        .map(i -> LocalDateTime.ofInstant(Instant.ofEpochMilli(i), TimeZone.getDefault().toZoneId()))
+                        .map(LocalDateTime::parse)
                         .map(LocalDateTime::toLocalTime)
                         .sorted()
                         .toList());
@@ -158,8 +158,8 @@ public class KpiCalculator {
     }
 
     public float getTurnOverTime(Surgery surgery1, Surgery surgery2) {
-        LocalTime inTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(surgery2.getEventTimestamp(SurgeryEvents.InSO)), TimeZone.getDefault().toZoneId()).toLocalTime();
-        LocalTime outTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(surgery1.getEventTimestamp(SurgeryEvents.OutSO)), TimeZone.getDefault().toZoneId()).toLocalTime();
+        LocalTime inTime = LocalDateTime.parse(surgery2.getEventTimestamp(SurgeryEvents.InSO)).toLocalTime();
+        LocalTime outTime = LocalDateTime.parse(surgery1.getEventTimestamp(SurgeryEvents.OutSO)).toLocalTime();
         return Duration.between(outTime, inTime).toMinutes();
     }
 
