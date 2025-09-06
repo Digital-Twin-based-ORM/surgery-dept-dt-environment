@@ -14,7 +14,7 @@ public class Surgery {
     private PriorityClass priority;
     private int estimatedTime;
     private HospitalizationRegime hospitalizationRegime;
-    private Map<SurgeryEvents, Long> eventsTimestamps = new HashMap<>();
+    private Map<SurgeryEvents, String> eventsTimestamps = new HashMap<>();
     private Map<String, Float> surgeryKpi = new HashMap<>();
     private LocalDateTime recoveryDate;
     private LocalDateTime waitingListInsertionDate;
@@ -54,7 +54,7 @@ public class Surgery {
         this.waitingListInsertionDate = waitingListInsertionDate;
     }
 
-    public void addTimestamp(SurgeryEvents event, Long timestamp) {
+    public void addTimestamp(SurgeryEvents event, String timestamp) {
         this.eventsTimestamps.put(event, timestamp);
     }
 
@@ -105,12 +105,12 @@ public class Surgery {
         this.estimatedTime = estimatedTime;
     }
 
-    public void setEventsTimestamps(Map<SurgeryEvents, Long> eventsTimestamps) {
+    public void setEventsTimestamps(Map<SurgeryEvents, String> eventsTimestamps) {
         this.eventsTimestamps = eventsTimestamps;
     }
 
-    public Long getEventTimestamp(SurgeryEvents event) {
-        return this.eventsTimestamps.containsKey(event) ? this.eventsTimestamps.get(event) : 0;
+    public String getEventTimestamp(SurgeryEvents event) {
+        return this.eventsTimestamps.getOrDefault(event, "");
     }
 
     public HospitalizationRegime getHospitalizationRegime() {

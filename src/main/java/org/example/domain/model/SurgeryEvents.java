@@ -13,14 +13,10 @@ public enum SurgeryEvents {
     StCh("StCh"),
     EndCh("EndCh"),
     OutSO("OutSO"),
-    InRR("InRR"),
-    OutRR("OutRR"),
-    InUTI("InUTI"),
     OutORB("OutORB"),
     InR("InR"),
     InOutR("InOutR"),
-    InOutORB("InOutORB")
-    ;
+    InOutORB("InOutORB");
 
     private final String name;
 

@@ -3,6 +3,8 @@ package org.example.utils;
 import com.google.gson.*;
 import org.example.domain.model.DailySlot;
 import org.example.domain.model.SingleSlot;
+import org.example.domain.model.SurgeryEventInTime;
+import org.example.domain.model.SurgeryEvents;
 
 import java.util.ArrayList;
 
@@ -13,7 +15,7 @@ public class UtilsFunctions {
         try {
             return gson.fromJson(json, JsonObject.class);
         } catch (JsonParseException e) {
-            System.out.println("Errore durante la conversione della stringa in JsonObject: ${e.message}");
+            System.out.println("Errore durante la conversione della stringa in JsonObject: " + e.getMessage());
             return null;
         }
     }
@@ -39,6 +41,18 @@ public class UtilsFunctions {
         } catch (JsonParseException e) {
             System.out.println("Errore: ${e.message}");
             return null;
+        }
+    }
+
+    public static long getJsonLongField(String json, String field) {
+        Gson gson = new Gson();
+        try {
+            JsonObject jsonObj = stringToJsonObjectGson(json);
+            assert jsonObj != null;
+            return jsonObj.get(field).getAsLong();
+        } catch (JsonParseException e) {
+            System.out.println("Errore: ${e.message}");
+            return 0;
         }
     }
 
@@ -68,5 +82,12 @@ public class UtilsFunctions {
             );
         }
         return new DailySlot(day, dailySlots);
+    }
+
+    public static SurgeryEventInTime surgeryEventInTimeFromJson(String content) {
+        SurgeryEvents event = SurgeryEvents.valueOf(getJsonField(content, "event"));
+        String id = getJsonField(content, "idSurgery");
+        String timestamp = getJsonField(content, "timestamp");
+        return new SurgeryEventInTime(id, event, timestamp);
     }
 }
