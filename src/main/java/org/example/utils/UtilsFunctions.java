@@ -90,4 +90,8 @@ public class UtilsFunctions {
         String timestamp = getJsonField(content, "timestamp");
         return new SurgeryEventInTime(id, event, timestamp);
     }
+
+    public static Long getCurrentTimestamp() {
+        return System.currentTimeMillis();
+    }
 }

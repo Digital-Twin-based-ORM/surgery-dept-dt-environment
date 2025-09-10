@@ -1,22 +1,20 @@
-package org.example.digitalAdapter;
+package org.example.digitalAdapter.custom;
 
-import it.wldt.adapter.digital.DigitalAdapter;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
+import org.example.utils.MqttPropertiesConfig;
 import org.slf4j.Logger;
 
 public interface AbstractMQTTDigitalAdapter {
 
-    default void publishUpdate(String id, String valueKey, String body) {
+    default void publishUpdate(String topic, String body) {
         System.out.println("Attempting to send message...");
-        String topic        = getMQTTConfiguration().getBaseTopic() + "/" + id + "/" + valueKey;
         int qos             = 2;
-        String broker       = getMQTTConfiguration().getBroker();
-        String clientId     = getMQTTConfiguration().getClientId();
+        String broker       = "tcp://" + getMQTTConfiguration().getHost() + ":" + getMQTTConfiguration().getPort();
+        String clientId     = getId();
         MemoryPersistence persistence = new MemoryPersistence();
 
         try {
@@ -45,5 +43,7 @@ public interface AbstractMQTTDigitalAdapter {
 
     public Logger getLogger();
 
-    public MQTTAdapterConfiguration getMQTTConfiguration();
+    public MqttPropertiesConfig getMQTTConfiguration();
+
+    public String getId();
 }

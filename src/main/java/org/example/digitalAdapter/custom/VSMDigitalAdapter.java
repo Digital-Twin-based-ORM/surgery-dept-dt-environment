@@ -1,4 +1,4 @@
-package org.example.digitalAdapter;
+package org.example.digitalAdapter.custom;
 
 import it.wldt.adapter.digital.DigitalAdapter;
 import it.wldt.core.state.DigitalTwinState;
@@ -6,13 +6,8 @@ import it.wldt.core.state.DigitalTwinStateChange;
 import it.wldt.core.state.DigitalTwinStateEventNotification;
 import it.wldt.core.state.DigitalTwinStateProperty;
 import it.wldt.exception.WldtDigitalTwinStatePropertyException;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
 import org.example.digitalAdapter.configuration.VSMConfiguration;
+import org.example.utils.MqttPropertiesConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,18 +19,13 @@ import java.util.stream.Collectors;
 public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implements AbstractMQTTDigitalAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(VSMDigitalAdapter.class);
-    private final MQTTAdapterConfiguration mqttConfiguration;
+    private final MqttPropertiesConfig mqttConfiguration;
 
     private final String PATIENT_ID_PROPERTY = "patientId";
 
-    public VSMDigitalAdapter(String id, VSMConfiguration configuration, MQTTAdapterConfiguration mqttConfiguration) {
+    public VSMDigitalAdapter(String id, VSMConfiguration configuration, MqttPropertiesConfig mqttConfiguration) {
         super(id, configuration);
         this.mqttConfiguration = mqttConfiguration;
-    }
-
-    @Override
-    public void publishUpdate(String id, String valueType, String body) {
-        AbstractMQTTDigitalAdapter.super.publishUpdate(id, valueType, body);
     }
 
     @Override
@@ -44,7 +34,7 @@ public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implemen
     }
 
     @Override
-    public MQTTAdapterConfiguration getMQTTConfiguration() {
+    public MqttPropertiesConfig getMQTTConfiguration() {
         return this.mqttConfiguration;
     }
 
@@ -65,7 +55,7 @@ public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implemen
                     List<DigitalTwinStateProperty<?>> list = digitalTwinState.getPropertyList().get();
                     Optional<DigitalTwinStateProperty<?>> patientId = list.stream().filter(i -> i.getKey().equals(PATIENT_ID_PROPERTY)).filter(i -> i.getValue() != "").findFirst();
                     logger.info("Notifying new state...");
-                    patientId.ifPresent(digitalTwinStateProperty -> publishUpdate(digitalTwinStateProperty.getValue().toString(), property.getKey(), property.getValue().toString()));
+                    patientId.ifPresent(digitalTwinStateProperty -> publishUpdate("patient/" + digitalTwinStateProperty.getValue().toString() + "/" + property.getKey(), property.getValue().toString()));
                 }
             } catch (WldtDigitalTwinStatePropertyException e) {
                 throw new RuntimeException(e);

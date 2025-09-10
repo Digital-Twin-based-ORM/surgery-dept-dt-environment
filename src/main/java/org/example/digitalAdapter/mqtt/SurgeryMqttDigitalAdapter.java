@@ -1,4 +1,4 @@
-package org.example.digitalAdapter;
+package org.example.digitalAdapter.mqtt;
 
 import com.google.gson.JsonObject;
 import it.wldt.adapter.mqtt.digital.MqttDigitalAdapter;
@@ -12,6 +12,7 @@ import org.example.domain.model.SurgeryEventInTime;
 import org.example.utils.Pair;
 
 import static org.example.physicalAdapter.MqttSurgeryDepPhysicalAdapter.*;
+import static org.example.physicalAdapter.MqttSurgeryPhysicalAdapter.*;
 
 public class SurgeryMqttDigitalAdapter {
 
@@ -19,7 +20,7 @@ public class SurgeryMqttDigitalAdapter {
 
     public SurgeryMqttDigitalAdapter(String host, Integer port, String idDT, String idDepDT) throws MqttDigitalAdapterConfigurationException {
         builder = MqttDigitalAdapterConfiguration.builder(host, port);
-        String baseTopic = "anylogic/id/dep/" + idDT + "/";
+        String baseTopic = "anylogic/id/dep/" + idDepDT + "/";
 
         builder.addEventNotificationTopic(M10, baseTopic + M10, MqttQosLevel.MQTT_QOS_0, this::convertKpiToJson);
         builder.addEventNotificationTopic(M14, baseTopic + M14, MqttQosLevel.MQTT_QOS_0, this::convertKpiToJson);
@@ -27,10 +28,10 @@ public class SurgeryMqttDigitalAdapter {
         builder.addEventNotificationTopic(M17, baseTopic + M17, MqttQosLevel.MQTT_QOS_0, this::convertKpiToJson);
         builder.addEventNotificationTopic(M26, baseTopic + M26, MqttQosLevel.MQTT_QOS_0, this::convertKpiToJson);
 
-        builder.addEventNotificationTopic(SURGERY_CREATED, baseTopic + SURGERY_CREATED, MqttQosLevel.MQTT_QOS_0, this::convertSurgeryToJson);
-        builder.addEventNotificationTopic(NEW_SURGERY_EVENT, baseTopic + NEW_SURGERY_EVENT, MqttQosLevel.MQTT_QOS_0, this::convertEventToJson);
-        builder.addEventNotificationTopic(SURGERY_PRIORITY_CHANGED, baseTopic + SURGERY_PRIORITY_CHANGED, MqttQosLevel.MQTT_QOS_0, this::convertPriorityToJson);
-        builder.addEventNotificationTopic(SURGERY_EXECUTED_IN, baseTopic + SURGERY_EXECUTED_IN, MqttQosLevel.MQTT_QOS_0, this::convertSurgeryExecutionToJson);
+        builder.addEventNotificationTopic(SURGERY_CREATED_NOTIFICATION, baseTopic + SURGERY_CREATED, MqttQosLevel.MQTT_QOS_0, this::convertSurgeryToJson);
+        builder.addEventNotificationTopic(SURGERY_EVENT_KEY, baseTopic + NEW_SURGERY_EVENT, MqttQosLevel.MQTT_QOS_0, this::convertEventToJson);
+        builder.addEventNotificationTopic(PRIORITY_KEY, baseTopic + SURGERY_PRIORITY_CHANGED, MqttQosLevel.MQTT_QOS_0, this::convertPriorityToJson);
+        builder.addEventNotificationTopic(EXECUTED_IN_KEY, baseTopic + SURGERY_EXECUTED_IN, MqttQosLevel.MQTT_QOS_0, this::convertSurgeryExecutionToJson);
 
     }
 

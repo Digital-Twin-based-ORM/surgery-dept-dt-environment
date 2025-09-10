@@ -1,37 +1,62 @@
-package org.example.digitalAdapter;
+package org.example.digitalAdapter.custom;
 
+import com.google.gson.JsonObject;
 import it.wldt.adapter.digital.DigitalAdapter;
 import it.wldt.core.state.DigitalTwinState;
 import it.wldt.core.state.DigitalTwinStateChange;
 import it.wldt.core.state.DigitalTwinStateEvent;
 import it.wldt.core.state.DigitalTwinStateEventNotification;
 import it.wldt.exception.EventBusException;
-import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
 import org.example.digitalAdapter.configuration.SurgeryDepConfiguration;
+import org.example.digitalAdapter.handler.DigitalHandler;
+import org.example.utils.MqttPropertiesConfig;
+import org.example.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SurgeryDigitalAdapter extends DigitalAdapter<SurgeryDepConfiguration> implements AbstractMQTTDigitalAdapter {
+import static org.example.physicalAdapter.MqttSurgeryDepPhysicalAdapter.*;
 
-    private static final Logger logger = LoggerFactory.getLogger(SurgeryDigitalAdapter.class);
-    private final MQTTAdapterConfiguration mqttConfiguration;
+@SuppressWarnings("ALL")
+public class SurgeryKpiDigitalAdapter extends DigitalAdapter<SurgeryDepConfiguration> implements AbstractMQTTDigitalAdapter {
 
-    public SurgeryDigitalAdapter(String id, SurgeryDepConfiguration configuration, MQTTAdapterConfiguration mqttConfiguration) {
+    public static String SURGERY_CREATED_NOTIFICATION = "surgeryCreatedNotification";
+    private static final Logger logger = LoggerFactory.getLogger(SurgeryKpiDigitalAdapter.class);
+    private final MqttPropertiesConfig mqttConfiguration;
+    private ArrayList<DigitalHandler> handlers = new ArrayList<>();
+
+    public SurgeryKpiDigitalAdapter(String id, SurgeryDepConfiguration configuration, MqttPropertiesConfig mqttConfiguration) {
         super(id, configuration);
         this.mqttConfiguration = mqttConfiguration;
+        String baseTopic = "anylogic/id/dep/" + configuration.getIdDigitalTwin() + "/";
+
+        this.handlers.add(new DigitalHandler<>(M10, baseTopic + M10, this::convertKpiToJson));
+        this.handlers.add(new DigitalHandler<>(M14, baseTopic + M14, this::convertKpiToJson));
+        this.handlers.add(new DigitalHandler<>(M15, baseTopic + M15, this::convertKpiToJson));
+        this.handlers.add(new DigitalHandler<>(M17, baseTopic + M17, this::convertKpiToJson));
+        this.handlers.add(new DigitalHandler<>(M26, baseTopic + M26, this::convertKpiToJson));
     }
 
     @Override
     protected void onStateUpdate(DigitalTwinState digitalTwinState, DigitalTwinState digitalTwinState1, ArrayList<DigitalTwinStateChange> arrayList) {
-        logger.info("State updated... ");
+
     }
 
     @Override
     protected void onEventNotificationReceived(DigitalTwinStateEventNotification<?> digitalTwinStateEventNotification) {
         logger.info("Event notified inside digital adapter... " + digitalTwinStateEventNotification.getDigitalEventKey());
+        String eventKey = digitalTwinStateEventNotification.getDigitalEventKey();
+        Object body = digitalTwinStateEventNotification.getBody();
+        Optional<DigitalHandler> handler = handlers.stream().filter(i -> i.getKey().equals(eventKey)).findFirst();
+        if(handler.isPresent()) {
+            Function<Object, String> function = handler.get().getHandler();
+            String message = function.apply(body);
+            this.publishUpdate(handler.get().getTopic(), message);
+        }
     }
 
     @Override
@@ -46,16 +71,6 @@ public class SurgeryDigitalAdapter extends DigitalAdapter<SurgeryDepConfiguratio
 
     @Override
     public void onDigitalTwinSync(DigitalTwinState digitalTwinState) {
-        // TODO notify SURGERY_CREATED
-        /*
-        try {
-            Optional<DigitalTwinStateProperty<?>> idDtProperty = digitalTwinState.getProperty("id");
-            String  idDT = (String)idDtProperty.orElseThrow().getValue();
-        } catch (WldtDigitalTwinStatePropertyException e) {
-            throw new RuntimeException(e);
-        }
-        publishUpdate(getConfiguration().getIdDigitalTwin(), "created", "");
-        */
         System.out.println("[DemoDigitalAdapter] -> onDigitalTwinSync(): " + digitalTwinState);
 
         try {
@@ -107,7 +122,14 @@ public class SurgeryDigitalAdapter extends DigitalAdapter<SurgeryDepConfiguratio
     }
 
     @Override
-    public MQTTAdapterConfiguration getMQTTConfiguration() {
+    public MqttPropertiesConfig getMQTTConfiguration() {
         return mqttConfiguration;
+    }
+
+    private String convertKpiToJson(Pair<String, String> kpi) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("surgeryId", kpi.getLeft());
+        obj.addProperty("value", kpi.getRight());
+        return obj.toString();
     }
 }
