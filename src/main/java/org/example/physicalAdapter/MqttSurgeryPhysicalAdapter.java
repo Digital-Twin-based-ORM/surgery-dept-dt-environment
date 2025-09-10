@@ -15,7 +15,6 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
     public final static String STATUS_KEY = "status";
     public final static String LAST_EVENT_KEY = "last_event";
     public final static String PATIENT_ID_KEY = "patient_id";
-    public final static String PROGRAMMED_DATE_KEY = "programmed_date";
     public final static String EXECUTION_START_KEY = "execution_start_date";
     public final static String EXECUTION_END_KEY = "execution_end_date";
     public final static String WARNING_KEY = "warning";
@@ -24,8 +23,8 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
     public final static String SURGERY_SUTURE_KEY = "suture_timestamp";
     public final static String PROGRAMMED_IN_KEY = "programmedIn";
     public final static String EXECUTED_IN_KEY = "executedIn";
-    public final static String ADMISSION_TIME_KEY = "admissionTime";
-    public final static String ARRIVAL_TIME_KEY = "arrivalTime";
+    public final static String SURGERY_TERMINATED = "surgeryTerminated";
+    public static String SURGERY_CREATED_NOTIFICATION = "surgeryCreatedNotification";
 
     private String baseTopic = "";
     private final MqttPhysicalAdapterConfigurationBuilder builder;
@@ -53,14 +52,13 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
         this.addStringEvent(PATIENT_ID_KEY);
         this.addStringEvent(PROGRAMMED_IN_KEY);
         this.addStringEvent(EXECUTED_IN_KEY);
+        this.addStringEvent(SURGERY_TERMINATED);
+        this.addStringEvent(SURGERY_CREATED_NOTIFICATION);
 
-        this.addStringProperty(PROGRAMMED_DATE_KEY, ""); // String.valueOf(LocalDateTime.now()) for test
-        this.addStringProperty(EXECUTION_START_KEY, "");
-        this.addStringProperty(EXECUTION_END_KEY, "");
-        this.addStringProperty(SURGERY_INCISION_KEY, "");
-        this.addStringProperty(SURGERY_SUTURE_KEY, "");
-        this.addStringProperty(ADMISSION_TIME_KEY, "");
-        this.addStringProperty(ARRIVAL_TIME_KEY, "");
+        this.addStringProperty(EXECUTION_START_KEY, ""); // redundant (not necessary, only for tracking reason)
+        this.addStringProperty(EXECUTION_END_KEY, ""); // redundant (not necessary, only for tracking reason)
+        this.addStringProperty(SURGERY_INCISION_KEY, ""); // redundant (not necessary, only for tracking reason)
+        this.addStringProperty(SURGERY_SUTURE_KEY, ""); // redundant (not necessary, only for tracking reason)
     }
 
 

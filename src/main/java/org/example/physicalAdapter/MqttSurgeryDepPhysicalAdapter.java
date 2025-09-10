@@ -65,6 +65,7 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
         this.addSurgeryKpiEventTopic(M26);
 
         this.builder.addPhysicalAssetEventAndTopic(SLOT_SET, "text/plain", this.baseTopic + SLOT_SET, content -> {
+            // get the daily slots of the current working day and the specific operating room
             JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(content);
             String operatingRoomId = jsonObject.get("operatingRoomId").getAsString();
             DailySlot slots = UtilsFunctions.getDailySlotsFromJson(jsonObject);

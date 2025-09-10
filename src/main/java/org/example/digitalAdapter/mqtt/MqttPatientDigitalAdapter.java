@@ -1,4 +1,4 @@
-package org.example.digitalAdapter;
+package org.example.digitalAdapter.mqtt;
 
 import it.wldt.adapter.mqtt.digital.MqttDigitalAdapter;
 import it.wldt.adapter.mqtt.digital.MqttDigitalAdapterConfiguration;
