@@ -18,10 +18,18 @@ import java.util.Map;
 public abstract class AbstractShadowing extends ShadowingFunction {
 
     private final InternalProperties properties;
+    private final PhysicalAssetDescription internalPad = new PhysicalAssetDescription();
+
+    public InternalProperties getProperties() {
+        return properties;
+    }
 
     public AbstractShadowing(String id) {
         super(id);
         properties = new InternalProperties();
+        for(PhysicalAssetProperty<?> property : properties.getProperties()) {
+            internalPad.getProperties().add(property);
+        }
     }
 
     public AbstractShadowing(String id, InternalProperties properties) {
@@ -59,14 +67,7 @@ public abstract class AbstractShadowing extends ShadowingFunction {
             // NEW from 0.3.0 -> Start DT State Change Transaction
             this.digitalTwinStateManager.startStateTransaction();
 
-            // create static initial values of the DT, these are not linked to any physical adapter
-            for(PhysicalAssetProperty<?> property: properties.getProperties()) {
-                try {
-                    this.digitalTwinStateManager.createProperty(new DigitalTwinStateProperty<>(property.getKey(), property.getInitialValue()));
-                } catch (WldtDigitalTwinStateException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            adaptersPhysicalAssetDescriptionMap.put("internalProperties", internalPad);
 
             //Iterate over all the received PAD from connected Physical Adapters
             adaptersPhysicalAssetDescriptionMap.values().forEach(pad -> {

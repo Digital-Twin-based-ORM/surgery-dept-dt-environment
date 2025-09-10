@@ -2,16 +2,14 @@ package org.example.dt;
 
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapter;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapterConfiguration;
-import it.wldt.adapter.mqtt.digital.MqttDigitalAdapter;
 import it.wldt.adapter.mqtt.digital.exception.MqttDigitalAdapterConfigurationException;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.exception.*;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.example.digitalAdapter.SurgeryDigitalAdapter;
-import org.example.digitalAdapter.SurgeryMqttDigitalAdapter;
-import org.example.digitalAdapter.configuration.MQTTAdapterConfiguration;
+import org.example.digitalAdapter.custom.SurgeryKpiDigitalAdapter;
+import org.example.digitalAdapter.mqtt.SurgeryMqttDigitalAdapter;
 import org.example.digitalAdapter.configuration.SurgeryDepConfiguration;
 import org.example.dt.property.SurgeryProperties;
 import org.example.physicalAdapter.MqttSurgeryPhysicalAdapter;
@@ -19,8 +17,6 @@ import org.example.physicalAdapter.MqttSurgeryPhysicalAdapter;
 import org.example.shadowing.SurgeryShadowingFunction;
 import org.example.utils.HttpConnectionConfig;
 import org.example.utils.MqttPropertiesConfig;
-
-import java.time.LocalDateTime;
 
 public class SurgeryDigitalTwin {
 
@@ -38,12 +34,14 @@ public class SurgeryDigitalTwin {
 
         HttpDigitalAdapter httpDigitalAdapter = new HttpDigitalAdapter(config, digitalTwin);
 
-        MqttDigitalAdapter mqttDigitalAdapter = new SurgeryMqttDigitalAdapter(mqttConfig.getHost(),mqttConfig.getPort(), idDT, idDepDT).build(idDT + "-mqtt-da");
+        SurgeryKpiDigitalAdapter surgeryKpiDigitalAdapter = new SurgeryKpiDigitalAdapter(idDT, new SurgeryDepConfiguration(idDepDT), new MqttPropertiesConfig("127.0.0.1", 1883));
+        SurgeryMqttDigitalAdapter surgeryMqttDigitalAdapter = new SurgeryMqttDigitalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDT, idDepDT);
 
         // Physical Adapter with Configuration
         digitalTwin.addPhysicalAdapter(mqttPhysicalAdapter);
         digitalTwin.addDigitalAdapter(httpDigitalAdapter);
-        digitalTwin.addDigitalAdapter(mqttDigitalAdapter);
+        digitalTwin.addDigitalAdapter(surgeryMqttDigitalAdapter.build("-mqtt-da"));
+        digitalTwin.addDigitalAdapter(surgeryKpiDigitalAdapter);
     }
 
     public DigitalTwin getDigitalTwin() {

@@ -9,7 +9,7 @@ import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationE
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.exception.*;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.example.digitalAdapter.MqttPatientDigitalAdapter;
+import org.example.digitalAdapter.mqtt.MqttPatientDigitalAdapter;
 import org.example.dt.property.PatientProperties;
 import org.example.physicalAdapter.MqttPatientPhysicalAdapterBuilder;
 import org.example.shadowing.PatientShadowingFunction;
@@ -33,7 +33,7 @@ public class PatientDigitalTwin {
         HttpDigitalAdapter httpDigitalAdapter = new HttpDigitalAdapter(config, digitalTwin);
 
         MqttPatientDigitalAdapter builderDigitalAdapter = new MqttPatientDigitalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDT);
-        MqttDigitalAdapter mqttDigitalAdapter = builderDigitalAdapter.build(idDT + "-mqtt-pa");
+        MqttDigitalAdapter mqttDigitalAdapter = builderDigitalAdapter.build(idDT + "-mqtt-da");
 
         // Physical Adapter with Configuration
         digitalTwin.addPhysicalAdapter(mqttPhysicalAdapter);
