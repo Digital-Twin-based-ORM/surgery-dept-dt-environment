@@ -1,0 +1,22 @@
+sale_operatorie:
+  - nome: "or_1"
+    slot_giornalieri:
+      - day: "2025-09-23"
+        slots:
+          - startSlot: "09:30"
+            endSlot: "11:45"
+            procedure: ""
+          - startSlot: "14:15"
+            endSlot: "17:00"
+            procedure: ""
+
+  - nome: "or_2"
+    slot_giornalieri:
+      - day: "2025-09-23"
+        slots:
+          - startSlot: "09:30"
+            endSlot: "11:45"
+            procedure: ""
+          - startSlot: "14:15"
+            endSlot: "17:00"
+            procedure: ""
