@@ -2,6 +2,7 @@ package org.example.shadowing;
 
 import it.wldt.adapter.digital.event.DigitalActionWldtEvent;
 import it.wldt.adapter.physical.PhysicalAssetDescription;
+import it.wldt.adapter.physical.PhysicalAssetEvent;
 import it.wldt.adapter.physical.PhysicalAssetProperty;
 import it.wldt.adapter.physical.PhysicalAssetRelationship;
 import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
@@ -14,11 +15,14 @@ import it.wldt.core.state.DigitalTwinStateRelationshipInstance;
 import it.wldt.exception.WldtDigitalTwinStateEventNotificationException;
 import it.wldt.exception.WldtDigitalTwinStateException;
 import it.wldt.exception.WldtDigitalTwinStatePropertyException;
-import org.example.domain.model.SurgeryEventInTime;
-import org.example.domain.model.SurgeryEvents;
-import org.example.domain.model.Warning;
+import org.example.businessLayer.adapter.OperatingRoomInfo;
+import org.example.businessLayer.adapter.SurgeryPropertyChanged;
+import org.example.domain.model.*;
+import org.example.dt.policy.WriteOnceProperties;
 import org.example.dt.property.InternalProperties;
+import org.example.dt.property.SurgeryProperties;
 import org.example.utils.Pair;
+import org.example.utils.UtilsFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +41,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
 
     //TODO each event like a property?
     private final Map<SurgeryEvents, String> eventsTimestamps = new HashMap<>();
-    private final List<String> writeOnceProperties = List.of(PROGRAMMED_DATE_KEY, EXECUTION_START_KEY, EXECUTION_END_KEY, SURGERY_INCISION_KEY, SURGERY_SUTURE_KEY);
+    private final WriteOnceProperties writeOnceProperties = new WriteOnceProperties();
     private PhysicalAssetRelationship<String> patientRelationship = null;
     private PhysicalAssetRelationship<String> programmedOpRoomRelationship = null;
     private PhysicalAssetRelationship<String> executedOpRoomRelationship = null;
@@ -69,6 +73,15 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
         PhysicalAssetDescription pad = new PhysicalAssetDescription();
         pad.getProperties().add(new PhysicalAssetProperty<>("score", 0));
         pad.getProperties().add(new PhysicalAssetProperty<>("warnings", new ArrayList<Warning>()));
+        pad.getEvents().add(new PhysicalAssetEvent(M10, "text/plain"));
+        pad.getEvents().add(new PhysicalAssetEvent(M14, "text/plain"));
+        pad.getEvents().add(new PhysicalAssetEvent(M15, "text/plain"));
+        pad.getEvents().add(new PhysicalAssetEvent(M17, "text/plain"));
+        pad.getEvents().add(new PhysicalAssetEvent(M26, "text/plain"));
+
+        this.writeOnceProperties.addKeys(EXECUTION_START_KEY, EXECUTION_END_KEY, SURGERY_INCISION_KEY, SURGERY_SUTURE_KEY);
+        Optional<PhysicalAssetProperty<?>> isCancelledProperty = adaptersPhysicalAssetDescriptionMap.get(idDT + "-mqtt-pa").getProperties().stream().filter(i -> i.getKey().equals(IS_CANCELLED)).findFirst();
+        isCancelledProperty.ifPresent(physicalAssetProperty -> this.writeOnceProperties.addCustomPolicy(IS_CANCELLED, (Boolean i) -> !i, (Boolean) physicalAssetProperty.getInitialValue()));
 
         this.patientRelationship = new PhysicalAssetRelationship<>(PATIENT_OPERATED_RELATIONSHIP_NAME, PATIENT_OPERATED_RELATIONSHIP_TYPE);
         this.programmedOpRoomRelationship = new PhysicalAssetRelationship<>(PROGRAMMED_IN_RELATIONSHIP_NAME, PROGRAMMED_IN_RELATIONSHIP_TYPE);
@@ -79,6 +92,9 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
 
         adaptersPhysicalAssetDescriptionMap.put("relationship_pad", pad);
         super.onDigitalTwinBound(adaptersPhysicalAssetDescriptionMap);
+
+        // send the surgery DT creation notification (to the department for example)
+        this.notifySurgeryCreation();
     }
 
     @Override
@@ -93,17 +109,21 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
 
     @Override
     protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalAssetPropertyWldtEvent) {
-        logger.info("Property variation detected... " + physicalAssetPropertyWldtEvent.getPhysicalPropertyId());
+        logger.info("Property variation detected... " + physicalAssetPropertyWldtEvent.getPhysicalPropertyId() + " with value " + physicalAssetPropertyWldtEvent.getBody());
         try {
             String id = physicalAssetPropertyWldtEvent.getPhysicalPropertyId();
 
-            // check write once properties
-            if(writeOnceProperties.contains(id)) {
-                DigitalTwinStateProperty<?> oldValue = digitalTwinStateManager.getDigitalTwinState().getProperty(id).get();
-                if(!Objects.equals(oldValue.getValue().toString(), "")) {
+            try {
+                // check write once properties
+                if(writeOnceProperties.isModified(id) || !writeOnceProperties.isModificationAllowed(id)) {
                     return;
                 }
+                this.writeOnceProperties.setModified(id);
+                this.writeOnceProperties.setLastValueForCustomPolicy(id, physicalAssetPropertyWldtEvent.getBody());
+            } catch (Exception e) {
+                logger.error(e.toString());
             }
+
 
             //Update Digital Twin State
             //NEW from 0.3.0 -> Start State Transaction
@@ -114,9 +134,11 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
             //NEW from 0.3.0 -> Commit State Transaction
             this.digitalTwinStateManager.commitStateTransaction();
 
+            this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(id, new SurgeryPropertyChanged<>(idDT, physicalAssetPropertyWldtEvent.getBody()), physicalAssetPropertyWldtEvent.getCreationTimestamp()));
+
         } catch (WldtDigitalTwinStateException e) {
             e.printStackTrace();
-        } catch (WldtDigitalTwinStatePropertyException e) {
+        } catch (WldtDigitalTwinStateEventNotificationException e) {
             throw new RuntimeException(e);
         }
     }
@@ -133,23 +155,25 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                 case SURGERY_EVENT_KEY -> {
                     SurgeryEventInTime event = (SurgeryEventInTime) physicalAssetEventWldtEvent.getBody();
                     String eventTimestamp = event.timestamp(); // valid for a simulated physical world
-                    long eventTimeStampMillis = LocalDateTime.parse(eventTimestamp).atZone(ZoneId.systemDefault())
-                            .toInstant()
-                            .toEpochMilli();
                     logger.info("Surgery event notified... " + event);
-                    try {
-                        checkIfOperationStarted(event.event(), eventTimestamp);
-                    } catch (WldtDigitalTwinStatePropertyException | WldtDigitalTwinStateEventNotificationException e) {
-                        throw new RuntimeException(e);
-                    }
-                    this.updateSurgeryEvents(event.event(), eventTimestamp);
+                    logger.info("Update state to... " + event);
+                    eventsTimestamps.replace(event.event(), eventTimestamp);
                     try {
                         super.updateProperty(LAST_EVENT_KEY, event.event().getName());
-                        this.updateKPI(eventTimeStampMillis);
                         // notify new event to Dep Twin (using the digital adapter)
-                        digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(NEW_SURGERY_EVENT, "", timestamp));
+                        digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(SURGERY_EVENT_KEY, event, timestamp));
                     } catch (WldtDigitalTwinStateException | WldtDigitalTwinStateEventNotificationException e) {
                         throw new RuntimeException(e);
+                    }
+                }
+                case SURGERY_TERMINATED -> {
+                    try {
+                        Long eventTimeStampMillis = LocalDateTime.parse((String)physicalAssetEventWldtEvent.getBody()).atZone(ZoneId.systemDefault())
+                                .toInstant()
+                                .toEpochMilli();
+                        this.updateKPI(eventTimeStampMillis);
+                    } catch (Exception e) {
+                        logger.error("ERROR surgery: " + e.getMessage());
                     }
                 }
                 case WARNING_KEY -> {
@@ -187,13 +211,15 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                     }
                 }
                 case EXECUTED_IN_KEY -> {
+                    logger.info("SURGERY EXECUTED ID");
                     try {
                         this.digitalTwinStateManager.startStateTransaction();
-                        String operatingRoomUri = (String)physicalAssetEventWldtEvent.getBody();
-
-                        this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(EXECUTED_IN_RELATIONSHIP_NAME, operatingRoomUri, "executedOR"));
+                        OperatingRoomInfo operatingRoom = (OperatingRoomInfo)physicalAssetEventWldtEvent.getBody();
+                        this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(EXECUTED_IN_RELATIONSHIP_NAME, operatingRoom.uri(), "executedOR"));
                         this.digitalTwinStateManager.commitStateTransaction();
-                    } catch (WldtDigitalTwinStateException e) {
+                        digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(EXECUTED_IN_KEY, new SurgeryLocation(this.idDT, operatingRoom.id()), timestamp));
+                    } catch (WldtDigitalTwinStateException | WldtDigitalTwinStateEventNotificationException e) {
+                        logger.error("ERROR Surgery: " + e.getMessage());
                         throw new RuntimeException(e);
                     }
                 }
@@ -216,62 +242,36 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
 
     }
 
-    private void updateSurgeryEvents(SurgeryEvents event, String timestamp) {
-        Optional<SurgeryEvents> previousEventOpt;
-        // TODO maybe adding some policy classes?
-        if(event.equals(SurgeryEvents.InOutR)) {
-            if(!Objects.equals(eventsTimestamps.get(SurgeryEvents.InR), "")) {
-                previousEventOpt = Optional.of(SurgeryEvents.OutR);
-            } else {
-                previousEventOpt = Optional.of(SurgeryEvents.InR);
-            }
-        } else if((event.equals(SurgeryEvents.InOutORB))) {
-            if(!Objects.equals(eventsTimestamps.get(SurgeryEvents.InORB), "")) {
-                previousEventOpt = Optional.of(SurgeryEvents.OutORB);
-            } else {
-                previousEventOpt = Optional.of(SurgeryEvents.InORB);
-            }
-        } else  {
-            previousEventOpt = event.getPreviousEvent();
-        }
+    private void calculateTardiness(String timestamp) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStateEventNotificationException {
+        Optional<DigitalTwinStateProperty<?>> programmedDatePropertyOpt = digitalTwinStateManager.getDigitalTwinState().getProperty(PROGRAMMED_DATE);
+        if(programmedDatePropertyOpt.isPresent()) {
+            DigitalTwinStateProperty<String> programmedDateProperty = (DigitalTwinStateProperty<String>) programmedDatePropertyOpt.get();
+            String dateTime = programmedDateProperty.getValue();
+            logger.info("Programmed date time: " + dateTime);
+            LocalDateTime triggerTime = LocalDateTime.parse(timestamp);
+            LocalDateTime programmedLDT = LocalDateTime.parse(dateTime);
+            logger.info("Trigger time: " + triggerTime + " - Programmed: " + programmedLDT);
+            // M10
+            long startTimeTardiness = Duration.between(programmedLDT, triggerTime).getSeconds();
 
-//        if(previousEventOpt.isPresent()) {
-//            if(eventsTimestamps.get(previousEventOpt.get()) == 0L || eventsTimestamps.get(previousEventOpt.get()) > timestamp) {
-//                // TODO notify error
-//                logger.error("Inconsistent event update: " + event);
-//            }
-//        }
-        logger.info("The new events set is: " + eventsTimestamps);
-        logger.info("Update state to... " + event);
-        eventsTimestamps.replace(event, timestamp);
-    }
-
-    private void checkIfOperationStarted(SurgeryEvents event, String timestamp) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStateEventNotificationException {
-        if(event.equals(SurgeryEvents.StCh)) {
-            Optional<DigitalTwinStateProperty<?>> programmedDatePropertyOpt = digitalTwinStateManager.getDigitalTwinState().getProperty(PROGRAMMED_DATE_KEY);
-            if(programmedDatePropertyOpt.isPresent()) {
-                DigitalTwinStateProperty<String> programmedDateProperty = (DigitalTwinStateProperty<String>) programmedDatePropertyOpt.get();
-                String dateTime = programmedDateProperty.getValue();
-                logger.info("Programmed date time: " + dateTime);
-                LocalDateTime triggerTime = LocalDateTime.parse(timestamp);
-                LocalDateTime programmedLDT = LocalDateTime.parse(dateTime);
-                logger.info("Trigger time: " + triggerTime + " - Programmed: " + programmedLDT);
-                // M10
-                long startTimeTardiness = Duration.between(programmedLDT, triggerTime).getSeconds();
-
-                Double minutes = ((double)startTimeTardiness / 60);
-                logger.info("Start Time Tardiness: " + minutes);
-                System.out.println("STT equals to " + minutes.intValue() + " minutes and " + ((minutes - minutes.intValue()) * 60) + "seconds" );
-                // notify event to digital adapter
-                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M10, new Pair<String, String>(this.getId(), "" + startTimeTardiness), triggerTime.atZone(ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli()));
-            }
+            Double minutes = ((double)startTimeTardiness / 60);
+            logger.info("Start Time Tardiness: " + minutes);
+            System.out.println("STT equals to " + minutes.intValue() + " minutes and " + ((minutes - minutes.intValue()) * 60) + "seconds" );
+            // notify event to digital adapter
+            digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M10, new Pair<String, String>(this.idDT, "" + startTimeTardiness), triggerTime.atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli()));
+        } else {
+            logger.error("Error surgery: programmed date not present");
         }
     }
 
     private void updateKPI(Long timestamp) throws WldtDigitalTwinStateEventNotificationException {
         try {
+            if(eventsTimestamps.get(SurgeryEvents.StCh) != "") {
+                calculateTardiness(eventsTimestamps.get(SurgeryEvents.StCh));
+            }
+
             if(eventsTimestamps.get(SurgeryEvents.PzPr) != "") {
                 // M15
                 LocalDateTime pzPrDateTime = LocalDateTime.parse(eventsTimestamps.get(SurgeryEvents.PzPr));
@@ -279,7 +279,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                 logger.info("PzPr: " + pzPrDateTime + " - stAnest: " + stAnestDateTime);
                 long tAnest = Duration.between(stAnestDateTime, pzPrDateTime).toSeconds();
                 // notify event to digital adapter
-                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M15, new Pair<String, String>(this.getId(), "" + tAnest), timestamp));
+                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M15, new Pair<String, String>(this.idDT, "" + tAnest), timestamp));
                 logger.info("T Anest: " + tAnest + " seconds");
             }
             if(!Objects.equals(eventsTimestamps.get(SurgeryEvents.EndCh), "")) {
@@ -288,7 +288,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                 LocalDateTime stChDateTime = LocalDateTime.parse(eventsTimestamps.get(SurgeryEvents.StCh));
                 long tChir = Duration.between(stChDateTime, endChDateTime).toSeconds();
                 // notify event to digital adapter
-                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M14, new Pair<String, String>(this.getId(), "" + tChir), timestamp));
+                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M14, new Pair<String, String>(this.idDT, "" + tChir), timestamp));
                 logger.info("T Chir: " + tChir + " seconds");
                 if(!Objects.equals(eventsTimestamps.get(SurgeryEvents.OutSO), "")) {
                     // M17
@@ -298,18 +298,36 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
 
                     float touchTime = Duration.between(stAnestDateTime, outSoDateTime).toSeconds();
                     // notify event to digital adapter
-                    digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M17, new Pair<String, String>(this.getId(), "" + touchTime), timestamp));
+                    digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M17, new Pair<String, String>(idDT, "" + touchTime), timestamp));
                     logger.info("Touch time: " + touchTime + " seconds");
                     // M26
                     long valueAddedTimeDen = Duration.between(inSoDateTime, outSoDateTime).toSeconds();;;
                     float valueAddedTime = (float) tChir / valueAddedTimeDen;
                     logger.info("Value added time: " + valueAddedTime);
                     // notify event to digital adapter
-                    digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M26, new Pair<String, String>(this.getId(), "" + valueAddedTime), timestamp));
+                    // digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M26, new Pair<String, String>(idDT, "" + valueAddedTime), timestamp));
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void notifySurgeryCreation() {
+        // notify surgery dt creation
+        SurgeryProperties properties = (SurgeryProperties)super.getProperties();
+        try {
+            digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(SURGERY_CREATED_NOTIFICATION, new Surgery(
+                    this.idDT,
+                    properties.getLocalProgrammedDate(),
+                    properties.getAdmissionDate(),
+                    properties.getPriority(),
+                    properties.getRegime(),
+                    properties.getEstimatedTime()
+            ), UtilsFunctions.getCurrentTimestamp()));
+        } catch (Exception e) {
+            logger.error("Error sending creation notification: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 }

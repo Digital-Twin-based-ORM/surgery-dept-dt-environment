@@ -27,7 +27,7 @@ public class SurgeryDigitalTwin {
         // Create the new Digital Twin with its Shadowing Function
         this.digitalTwin = new DigitalTwin(idDT, new SurgeryShadowingFunction(idDT, properties));
 
-        MqttSurgeryPhysicalAdapter builder = new MqttSurgeryPhysicalAdapter(idDT, mqttConfig.getHost(), mqttConfig.getPort());
+        MqttSurgeryPhysicalAdapter builder = new MqttSurgeryPhysicalAdapter(idDT, mqttConfig.getHost(), mqttConfig.getPort(), properties);
         HttpDigitalAdapterConfiguration config = new HttpDigitalAdapterConfiguration(idDT + "-surgery-http-adapter", connectionConfig.getHost(), connectionConfig.getPort());
 
         MqttPhysicalAdapter mqttPhysicalAdapter = builder.build(idDT + "-mqtt-pa");
@@ -35,7 +35,7 @@ public class SurgeryDigitalTwin {
         HttpDigitalAdapter httpDigitalAdapter = new HttpDigitalAdapter(config, digitalTwin);
 
         SurgeryKpiDigitalAdapter surgeryKpiDigitalAdapter = new SurgeryKpiDigitalAdapter(idDT, new SurgeryDepConfiguration(idDepDT), new MqttPropertiesConfig("127.0.0.1", 1883));
-        SurgeryMqttDigitalAdapter surgeryMqttDigitalAdapter = new SurgeryMqttDigitalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDT, idDepDT);
+        SurgeryMqttDigitalAdapter surgeryMqttDigitalAdapter = new SurgeryMqttDigitalAdapter(mqttConfig.getHost(), mqttConfig.getPort(), idDepDT);
 
         // Physical Adapter with Configuration
         digitalTwin.addPhysicalAdapter(mqttPhysicalAdapter);
