@@ -27,14 +27,19 @@ public abstract class AbstractShadowing extends ShadowingFunction {
     public AbstractShadowing(String id) {
         super(id);
         properties = new InternalProperties();
-        for(PhysicalAssetProperty<?> property : properties.getProperties()) {
-            internalPad.getProperties().add(property);
-        }
+        this.initProperties();
     }
 
     public AbstractShadowing(String id, InternalProperties properties) {
         super(id);
         this.properties = properties;
+        this.initProperties();
+    }
+
+    private void initProperties() {
+        for(PhysicalAssetProperty<?> property : properties.getProperties()) {
+            internalPad.getProperties().add(property);
+        }
     }
 
     public abstract Logger getLogger();

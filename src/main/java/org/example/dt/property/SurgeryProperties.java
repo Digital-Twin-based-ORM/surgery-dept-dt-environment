@@ -17,16 +17,16 @@ public class SurgeryProperties extends InternalProperties {
     public final static String CREATION_TIMESTAMP_PROPERTY_KEY = "creationTimestamp";
     public final static String SCORE_KEY = "score";
     public final static String ADMISSION_TIME_KEY = "admissionTime";
-    public final static String PROGRAMMED_DATE_KEY = "programmed_date";
 
     private final String reason;
-    private final String category;
+    private final String category; // procedure
     private final String code;
     private final String creationTimestamp;
     private final String admissionDate;
     private final String programmedDate;
     private final PriorityClass priority;
     private final HospitalizationRegime regime;
+    private final int estimatedTime;
 
     public HospitalizationRegime getRegime() {
         return regime;
@@ -36,26 +36,30 @@ public class SurgeryProperties extends InternalProperties {
         return priority;
     }
 
-    public LocalDateTime getProgrammedDate() {
-        return LocalDateTime.parse(programmedDate);
+    public String getProgrammedDate() {
+        return programmedDate;
     }
 
-    public SurgeryProperties(String reason, String category, String code, String creationTimestamp, String admissionDate, String programmedDate, PriorityClass priority, HospitalizationRegime regime) {
+    public SurgeryProperties(String reason, String category, String code, String creationTimestamp, String admissionDate, String programmedDate, PriorityClass priority, HospitalizationRegime regime, int estimatedTime) {
         this.reason = reason;
         this.category = category;
         this.code = code;
         this.creationTimestamp = creationTimestamp;
         this.admissionDate = admissionDate;
-        this.programmedDate = programmedDate;
         this.priority = priority;
         this.regime = regime;
+        this.programmedDate = programmedDate;
+        this.estimatedTime = estimatedTime;
 
         this.addProperty(new PhysicalAssetProperty<>(REASON_PROPERTY_KEY, this.reason));
         this.addProperty(new PhysicalAssetProperty<>(CATEGORY_PROPERTY_KEY, this.category));
         this.addProperty(new PhysicalAssetProperty<>(CODE_PROPERTY_KEY, this.code));
         this.addProperty(new PhysicalAssetProperty<>(CREATION_TIMESTAMP_PROPERTY_KEY, this.creationTimestamp));
         this.addProperty(new PhysicalAssetProperty<>(ADMISSION_TIME_KEY, this.admissionDate));
-        this.addProperty(new PhysicalAssetProperty<>(PROGRAMMED_DATE_KEY,  this.programmedDate));
+    }
+
+    public int getEstimatedTime() {
+        return estimatedTime;
     }
 
     public String getReason() {
@@ -76,5 +80,8 @@ public class SurgeryProperties extends InternalProperties {
 
     public LocalDateTime getAdmissionDate() {
         return LocalDateTime.parse(admissionDate);
+    }
+    public LocalDateTime getLocalProgrammedDate() {
+        return LocalDateTime.parse(programmedDate);
     }
 }

@@ -14,6 +14,12 @@ public abstract class AbstractMqttPhysicalAdapter {
         getBuilder().addPhysicalAssetPropertyAndTopic(key, initialValue, getBaseTopic() + key, String::toString);
     }
 
+    void addBooleanProperty(String key, boolean initialValue) throws MqttPhysicalAdapterConfigurationException {
+        // Configuring the mqtt physical and http digital adapter
+        // i -> getJsonField(i, STATUS_KEY) alternative with json
+        getBuilder().addPhysicalAssetPropertyAndTopic(key, initialValue, getBaseTopic() + key, Boolean::parseBoolean);
+    }
+
     void addStringEvent(String key) throws MqttPhysicalAdapterConfigurationException {
         // Configuring the mqtt physical and http digital adapter
         // i -> getJsonField(i, STATUS_KEY) alternative with json

@@ -7,6 +7,7 @@ import org.example.domain.model.SingleSlot;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OperatingRoomProperties extends InternalProperties {
@@ -15,18 +16,20 @@ public class OperatingRoomProperties extends InternalProperties {
     public static final String OPERATING_ROOM_NAME = "name";
 
     private final String name;
+    private final String idRoom;
+
+    public String getIdRoom() {
+        return idRoom;
+    }
 
     private final Map<String, DailySlot> procedureSlots;
 
-    public OperatingRoomProperties(String name, Map<String, DailySlot> procedureSlots) {
+    public OperatingRoomProperties(String name, String idRoom, Map<String, DailySlot> procedureSlots) {
         this.name = name;
+        this.idRoom = idRoom;
         this.procedureSlots = procedureSlots;
-        SingleSlot slot = new SingleSlot(LocalTime.now().toString(), LocalTime.now().plusHours(1).toString(), "");
-        ArrayList<SingleSlot> slots = new ArrayList<>();
-        slots.add(slot);
-        procedureSlots.put(LocalDate.now().toString(), new DailySlot(LocalDate.now().toString(), slots));
         this.addProperty(new PhysicalAssetProperty<>(DAILY_SLOTS, this.procedureSlots));
-        this.addProperty(new PhysicalAssetProperty<>(OPERATING_ROOM_NAME, this.procedureSlots));
+        this.addProperty(new PhysicalAssetProperty<>(OPERATING_ROOM_NAME, name));
     }
 
     public String getName() {
