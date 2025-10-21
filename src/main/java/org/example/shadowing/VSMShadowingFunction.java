@@ -21,11 +21,11 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.example.physicalAdapter.MqttVSMPhysicalAdapter.SET_PATIENT;
+import static org.example.physicalAdapter.MqttVSMPhysicalAdapter.VSM_PATIENT_ID;
 import static org.example.utils.GlobalValues.*;
 import static org.example.utils.GlobalValues.LOCATED_IN_RELATIONSHIP_TYPE;
 
 public class VSMShadowingFunction extends AbstractShadowing {
-
     private static final Logger logger = LoggerFactory.getLogger(VSMShadowingFunction.class);
     PhysicalAssetRelationship<String> patientRelationship = null;
     public VSMShadowingFunction(String id) {
@@ -73,19 +73,12 @@ public class VSMShadowingFunction extends AbstractShadowing {
 
     @Override
     protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalAssetPropertyWldtEvent) {
-        logger.info("Property variation detected... " + physicalAssetPropertyWldtEvent.getPhysicalPropertyId());
+        super.onPhysicalAssetPropertyVariation(physicalAssetPropertyWldtEvent);
         try {
-
-            //Update Digital Twin State
-            //NEW from 0.3.0 -> Start State Transaction
-            this.digitalTwinStateManager.startStateTransaction();
-
-            this.digitalTwinStateManager.updateProperty(new DigitalTwinStateProperty<>(physicalAssetPropertyWldtEvent.getPhysicalPropertyId(), physicalAssetPropertyWldtEvent.getBody()));
-            this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(SET_PATIENT, (String)physicalAssetPropertyWldtEvent.getBody(), physicalAssetPropertyWldtEvent.getCreationTimestamp()));
-            //NEW from 0.3.0 -> Commit State Transaction
-            this.digitalTwinStateManager.commitStateTransaction();
-
-        } catch (WldtDigitalTwinStateException | WldtDigitalTwinStateEventNotificationException e) {
+            if(physicalAssetPropertyWldtEvent.getPhysicalPropertyId().equals(VSM_PATIENT_ID)) {
+                this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(SET_PATIENT, (String)physicalAssetPropertyWldtEvent.getBody(), physicalAssetPropertyWldtEvent.getCreationTimestamp()));
+            }
+        } catch (WldtDigitalTwinStateEventNotificationException e) {
             e.printStackTrace();
         }
     }

@@ -16,12 +16,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.example.physicalAdapter.MqttVSMPhysicalAdapter.VSM_PATIENT_ID;
+
 public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implements AbstractMQTTDigitalAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(VSMDigitalAdapter.class);
     private final MqttPropertiesConfig mqttConfiguration;
-
-    private final String PATIENT_ID_PROPERTY = "patientId";
 
     public VSMDigitalAdapter(String id, VSMConfiguration configuration, MqttPropertiesConfig mqttConfiguration) {
         super(id, configuration);
@@ -40,25 +40,21 @@ public class VSMDigitalAdapter extends DigitalAdapter<VSMConfiguration> implemen
 
     @Override
     protected void onStateUpdate(DigitalTwinState digitalTwinState, DigitalTwinState digitalTwinState1, ArrayList<DigitalTwinStateChange> arrayList) {
-        logger.info("STATE CHANGES: " + arrayList.size());
         List<DigitalTwinStateProperty<?>> changedProperties = arrayList.stream()
-                .filter(i -> i.getResource() instanceof DigitalTwinStateProperty<?>)
+                .filter(i -> i.getResourceType() == DigitalTwinStateChange.ResourceType.PROPERTY)
                 .map(i -> (DigitalTwinStateProperty<?>)i.getResource())
                 .filter(i -> getConfiguration().getObservedProperties().contains(i.getKey()))
                 .collect(Collectors.toList());
 
-        logger.info("New state update from VSM Digital Adapter: " + arrayList.getFirst());
-        logger.info("Current state from VSM Digital Adapter: " + digitalTwinState);
         for(DigitalTwinStateProperty<?> property : changedProperties) {
             try {
                 if(digitalTwinState.getPropertyList().isPresent()) {
                     List<DigitalTwinStateProperty<?>> list = digitalTwinState.getPropertyList().get();
-                    Optional<DigitalTwinStateProperty<?>> patientId = list.stream().filter(i -> i.getKey().equals(PATIENT_ID_PROPERTY)).filter(i -> i.getValue() != "").findFirst();
-                    logger.info("Notifying new state...");
-                    patientId.ifPresent(digitalTwinStateProperty -> publishUpdate("patient/" + digitalTwinStateProperty.getValue().toString() + "/" + property.getKey(), property.getValue().toString()));
+                    Optional<DigitalTwinStateProperty<?>> patientId = list.stream().filter(i -> i.getKey().equals(VSM_PATIENT_ID)).filter(i -> i.getValue() != "").findFirst();
+                    patientId.ifPresent(digitalTwinStateProperty -> publishUpdate("anylogic/id/Patient/" + digitalTwinStateProperty.getValue().toString() + "/" + property.getKey(), property.getValue().toString()));
                 }
             } catch (WldtDigitalTwinStatePropertyException e) {
-                throw new RuntimeException(e);
+                logger.error("Error vsm digital adapter: " + e.getMessage());
             }
         }
     }
