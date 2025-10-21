@@ -36,6 +36,7 @@ public class KpiCalculator {
         if(orSlots.containsKey(idOperatingRoom)) {
             DailySlot dailySlot = orSlots.get(idOperatingRoom);
             double tso = getTSO(dailySlot);
+            System.out.println("TSO sala " + idOperatingRoom + ": " + tso);
             List<String> surgeriesID = surgeriesExecuted.stream().filter(i -> Objects.equals(i.operationRoomId(), idOperatingRoom)).map(SurgeryLocation::surgeryId).toList();
             List<Surgery> surgeries = allSurgeries.stream().filter(i -> surgeriesID.contains(i.getIdSurgery())).toList();
             for(Surgery surgery : surgeries) {
@@ -47,6 +48,7 @@ public class KpiCalculator {
                     timeExecution = timeExecution + (Duration.between(inSODateTime, outSODateTime).toMinutes());
                 }
             }
+            System.out.println("Time execution sala " + idOperatingRoom + ": " + timeExecution);
             return (float) (timeExecution / tso); // percentage (%)
         } else {
             return 0;
@@ -54,7 +56,8 @@ public class KpiCalculator {
     }
 
     public float M10(String operatingRoomId) {
-        List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds();
+        // start time tardiness per ogni sala operatoria: indica il ritardo del primo intervento chirurgico della giornata nella specifica sala operatoria
+        List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds(operatingRoomId);
         List<Surgery> surgeriesExecutedToday = allSurgeries.stream().filter(i -> surgeriesExecutedIds.contains(i.getIdSurgery())).toList();
         DailySlot slots = orSlots.get(operatingRoomId);
         SingleSlot slot = slots.getSlots().getFirst();
@@ -70,8 +73,8 @@ public class KpiCalculator {
      * Total over time of the day.
      * @return
      */
-    public float M11() {
-        return this.slotUtilization(UtilizationType.OVER_UTILIZATION);
+    public float M11(String operatingRoom) {
+        return this.slotUtilization(UtilizationType.OVER_UTILIZATION, operatingRoom);
     }
 
     /**
@@ -79,36 +82,41 @@ public class KpiCalculator {
      * and calculate the total amount of under utilization.
      * @return
      */
-    public float M12() {
-        return this.slotUtilization(UtilizationType.UNDER_UTILIZATION);
+    public float M12(String operatingRoom) {
+        return this.slotUtilization(UtilizationType.UNDER_UTILIZATION, operatingRoom);
     }
 
     /**
      * Calculate the mean turnover time of the day.
      * @return
      */
-    public float M13() {
-        // mean TT or list of TTs?
+    public float M13(String idOperatingRoom) {
+        // TODO Total turn over time for a specified operating room??
         float totalTime = 0;
-        List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds();
+        float totalSurgeries = 0;
+        List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds(idOperatingRoom);
         List<Surgery> surgeriesExecutedToday = allSurgeries.stream().filter(i -> surgeriesExecutedIds.contains(i.getIdSurgery())).toList();
-        for(Map.Entry<String, DailySlot> slots: orSlots.entrySet()) {
-            DailySlot dailySlots = slots.getValue();
-            for(SingleSlot slot: dailySlots.getSlots()) {
-                List<Surgery> surgeries = getSurgeriesInSlot(surgeriesExecutedToday, slot);
-                for(int i = 0; i < surgeries.size() - 1; i ++) {
-                    Surgery surgery1 = surgeries.get(i);
-                    Surgery surgery2 = surgeries.get(i + 1);
-                    float turnOverTime = getTurnOverTime(surgery1, surgery2);
-                    totalTime = totalTime + turnOverTime;
-                }
+
+        DailySlot slots = orSlots.get(idOperatingRoom);
+        for(SingleSlot slot: slots.getSlots()) {
+            List<Surgery> surgeries = getSurgeriesInSlot(surgeriesExecutedToday, slot);
+            System.out.println(Arrays.toString(surgeries.toArray()));
+            for(int i = 0; i < surgeries.size() - 1; i ++) {
+                Surgery surgery1 = surgeries.get(i);
+                Surgery surgery2 = surgeries.get(i + 1);
+                float turnOverTime = getTurnOverTime(surgery1, surgery2);
+                totalTime = totalTime + turnOverTime;
             }
+            totalSurgeries = totalSurgeries + surgeries.size();
         }
-        return totalTime;
+
+        return totalTime / totalSurgeries;
     }
 
-    public float M16(int numSurgeriesExecuted, int numSlots) {
-        return (float) numSurgeriesExecuted / numSlots;
+    public float M16(String idOperatingRoom) {
+        List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds(idOperatingRoom);
+        int numSlots = orSlots.get(idOperatingRoom).slots.size();
+        return (float) surgeriesExecutedIds.size() / numSlots;
     }
 
     public float M18() {
@@ -121,7 +129,7 @@ public class KpiCalculator {
         if(orSlots.containsKey(idOperatingRoom)) {
             DailySlot dailySlot = orSlots.get(idOperatingRoom);
             double tso = getTSO(dailySlot);
-            List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds();
+            List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds(idOperatingRoom);
             List<Surgery> surgeriesExecutedToday = allSurgeries.stream().filter(i -> surgeriesExecutedIds.contains(i.getIdSurgery())).toList();
             double tProgrammed = surgeriesExecutedToday.stream().mapToDouble(Surgery::getEstimatedTime).sum();
             return (float) (tProgrammed / tso);
@@ -129,29 +137,68 @@ public class KpiCalculator {
             return -1;
     }
 
-    private List<String> getSurgeriesExecutedIds() {
-        return this.surgeriesExecuted.stream().map(SurgeryLocation::surgeryId).collect(Collectors.toList());
+    public float M22() {
+        // Total turn over time for a specified operating room
+        float totalTTProlonged = 0;
+        int totalTurnOverTime = 0;
+        for(Map.Entry<String, DailySlot> operatingRoom : orSlots.entrySet()) {
+            List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds(operatingRoom.getKey());
+            List<Surgery> surgeriesExecutedToday = allSurgeries.stream().filter(i -> surgeriesExecutedIds.contains(i.getIdSurgery())).toList();
+            DailySlot slots = operatingRoom.getValue();
+            for(SingleSlot slot: slots.getSlots()) {
+                List<Surgery> surgeries = getSurgeriesInSlot(surgeriesExecutedToday, slot);
+                System.out.println(Arrays.toString(surgeries.toArray()));
+                for(int i = 0; i < surgeries.size() - 1; i ++) {
+                    Surgery surgery1 = surgeries.get(i);
+                    Surgery surgery2 = surgeries.get(i + 1);
+                    float turnOverTime = getTurnOverTime(surgery1, surgery2);
+                    totalTurnOverTime += 1;
+                    if(turnOverTime > 60) {
+                        totalTTProlonged += 1;
+                    }
+                }
+            }
+        }
+        if(totalTurnOverTime == 0) {
+            return -1;
+        }
+        return totalTTProlonged / totalTurnOverTime;
     }
 
-    private float slotUtilization(UtilizationType type) {
-        float totalTime = 0;
-        List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds();
+    public float M24() {
+        int totElectiveSessions = surgeriesExecuted.size();
+        int totUrgentSessions = 0;
+        List<String> surgeriesExecutedIds = this.surgeriesExecuted.stream().map(SurgeryLocation::surgeryId).toList();
         List<Surgery> surgeriesExecutedToday = allSurgeries.stream().filter(i -> surgeriesExecutedIds.contains(i.getIdSurgery())).toList();
-        for(Map.Entry<String, DailySlot> slots: orSlots.entrySet()) {
-            DailySlot dailySlots = slots.getValue();
-            for(SingleSlot slot: dailySlots.getSlots()) {
-                List<Surgery> surgeries = getSurgeriesInSlot(surgeriesExecutedToday, slot);
-                ArrayList<LocalTime> localTimes = new ArrayList<>(surgeries.stream()
-                        .map(i -> i.getEventTimestamp(SurgeryEvents.OutSO))
-                        .map(LocalDateTime::parse)
-                        .map(LocalDateTime::toLocalTime)
-                        .sorted()
-                        .toList());
-                LocalTime lastSurgery = localTimes.getLast();
-                switch (type) {
-                    case OVER_UTILIZATION -> totalTime = totalTime + slot.getOverTime(lastSurgery);
-                    case UNDER_UTILIZATION -> totalTime = totalTime + slot.getUnderUtilizationTime(lastSurgery);
-                }
+        for(Surgery surgeryExecuted : surgeriesExecutedToday) {
+            if(surgeryExecuted.getHospitalizationRegime().equals(HospitalizationRegime.URGENT)) {
+                totUrgentSessions += 1;
+            }
+        }
+        return (float) totUrgentSessions / totElectiveSessions;
+    }
+
+    private List<String> getSurgeriesExecutedIds(String idOperatingRoom) {
+        return this.surgeriesExecuted.stream().filter(i -> Objects.equals(i.operationRoomId(), idOperatingRoom)).map(SurgeryLocation::surgeryId).toList();
+    }
+
+    private float slotUtilization(UtilizationType type, String operatingRoom) {
+        float totalTime = 0;
+        List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds(operatingRoom);
+        List<Surgery> surgeriesExecutedToday = allSurgeries.stream().filter(i -> surgeriesExecutedIds.contains(i.getIdSurgery())).toList();
+        DailySlot dailySlots = orSlots.get(operatingRoom);
+        for(SingleSlot slot: dailySlots.getSlots()) {
+            List<Surgery> surgeries = getSurgeriesInSlot(surgeriesExecutedToday, slot);
+            ArrayList<LocalTime> localTimes = new ArrayList<>(surgeries.stream()
+                    .map(i -> i.getEventTimestamp(SurgeryEvents.OutSO))
+                    .map(LocalDateTime::parse)
+                    .map(LocalDateTime::toLocalTime)
+                    .sorted()
+                    .toList());
+            LocalTime lastSurgery = localTimes.getLast();
+            switch (type) {
+                case OVER_UTILIZATION -> totalTime = totalTime + slot.getOverTime(lastSurgery);
+                case UNDER_UTILIZATION -> totalTime = totalTime + slot.getUnderUtilizationTime(lastSurgery);
             }
         }
         return totalTime;
