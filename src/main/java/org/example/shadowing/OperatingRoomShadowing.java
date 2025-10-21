@@ -6,11 +6,15 @@ import it.wldt.adapter.physical.PhysicalAssetRelationship;
 import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceCreatedWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceDeletedWldtEvent;
+import it.wldt.core.state.DigitalTwinStateEventNotification;
 import it.wldt.core.state.DigitalTwinStateProperty;
 import it.wldt.core.state.DigitalTwinStateRelationshipInstance;
+import it.wldt.exception.WldtDigitalTwinStateEventNotificationException;
 import it.wldt.exception.WldtDigitalTwinStateException;
 import it.wldt.exception.WldtDigitalTwinStatePropertyException;
+import org.example.businessLayer.adapter.OperatingRoomDailySlot;
 import org.example.domain.model.DailySlot;
+import org.example.domain.model.OperatingRoomState;
 import org.example.dt.property.OperatingRoomProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,18 +31,22 @@ public class OperatingRoomShadowing extends AbstractShadowing {
 
     private static final Logger logger = LoggerFactory.getLogger(OperatingRoomShadowing.class);
     private Optional<String> surgeryDepUri = Optional.empty();
+    private final String idDT;
 
     public OperatingRoomShadowing(String id) {
         super(id);
+        this.idDT = id;
     }
 
     public OperatingRoomShadowing(String id, OperatingRoomProperties properties) {
         super(id, properties);
+        this.idDT = properties.getIdRoom();
     }
 
     public OperatingRoomShadowing(String id, OperatingRoomProperties properties, String surgeryDepUri) {
         super(id, properties);
         this.surgeryDepUri = Optional.of(surgeryDepUri);
+        this.idDT = properties.getIdRoom();
     }
 
     @Override
@@ -99,30 +107,65 @@ public class OperatingRoomShadowing extends AbstractShadowing {
             switch (eventKey) {
                 case DISINFECTION_TERMINATED -> {
                     try {
-                        super.updateProperty(LAST_DISINFECTION, "" + physicalAssetEventWldtEvent.getCreationTimestamp());
+                        super.updateProperty(LAST_DISINFECTION, "" + timestamp);
+                        this.digitalTwinStateManager.updateProperty(new DigitalTwinStateProperty<>(STATE, OperatingRoomState.READY_TO_USE.toString()));
+
                     } catch (WldtDigitalTwinStateException e) {
                         throw new RuntimeException(e);
                     }
                 }
                 case ASSIGN_DAILY_SLOTS -> {
-                    // TODO do tests
+                    // invia gli slot del giorno corrente al DT del dipartimento
+                    try {
+                        if(digitalTwinStateManager.getDigitalTwinState().getProperty(DAILY_SLOTS).isPresent()) {
+                            logger.info("FOUND PROPERTY...");
+                            DigitalTwinStateProperty<?> slotsProperty = digitalTwinStateManager.getDigitalTwinState().getProperty(DAILY_SLOTS).get();
+                            Map<String, DailySlot> dailySlots = (Map<String, DailySlot>) slotsProperty.getValue();
+                            String key = (String)physicalAssetEventWldtEvent.getBody();
+                            logger.info("KEY: " + key);
+                            DailySlot currentDaySlot = dailySlots.get(key);
+                            if(currentDaySlot != null) {
+                                logger.info("ASSIGNING DAILY SLOTS...");
+                                this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(ASSIGN_DAILY_SLOTS, new OperatingRoomDailySlot(this.idDT, currentDaySlot), timestamp));
+                            }
+                        }
+                    } catch (WldtDigitalTwinStatePropertyException | WldtDigitalTwinStateEventNotificationException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                case ADD_NEW_SLOT -> {
                     DailySlot slots = (DailySlot) physicalAssetEventWldtEvent.getBody();
                     try {
                         if(digitalTwinStateManager.getDigitalTwinState().getProperty(DAILY_SLOTS).isPresent()) {
                             DigitalTwinStateProperty<?> slotsProperty = digitalTwinStateManager.getDigitalTwinState().getProperty(DAILY_SLOTS).get();
                             Map<String, DailySlot> dailySlots = (Map<String, DailySlot>) slotsProperty.getValue();
-                            dailySlots.put(slots.getDay().toString(), slots);
+                            dailySlots.put(slots.getLocalDateDay().toString(), slots);
                             super.updateProperty(DAILY_SLOTS, dailySlots);
                         }
                     } catch (WldtDigitalTwinStatePropertyException | WldtDigitalTwinStateException e) {
                         throw new RuntimeException(e);
                     }
                 }
+                case DISINFECTION_STARTED -> {
+                    try {
+                        this.digitalTwinStateManager.updateProperty(new DigitalTwinStateProperty<>(STATE, OperatingRoomState.DISINFECTING.toString()));
+                    } catch (WldtDigitalTwinStateException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 case NOW_AVAILABLE -> {
-                    // silently ignored
+                    try {
+                        this.digitalTwinStateManager.updateProperty(new DigitalTwinStateProperty<>(STATE, OperatingRoomState.AVAILABLE.toString()));
+                    } catch (WldtDigitalTwinStateException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 case BUSY -> {
-                    // silently ignored
+                    try {
+                        this.digitalTwinStateManager.updateProperty(new DigitalTwinStateProperty<>(STATE, OperatingRoomState.BUSY.toString()));
+                    } catch (WldtDigitalTwinStateException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
