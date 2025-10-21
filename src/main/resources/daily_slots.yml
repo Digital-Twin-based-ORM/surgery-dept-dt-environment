@@ -3,10 +3,10 @@ sale_operatorie:
     slot_giornalieri:
       - day: "2025-09-23"
         slots:
-          - startSlot: "09:30"
-            endSlot: "11:45"
+          - startSlot: "09:00"
+            endSlot: "12:00"
             procedure: ""
-          - startSlot: "14:15"
+          - startSlot: "14:00"
             endSlot: "17:00"
             procedure: ""
 
@@ -14,9 +14,9 @@ sale_operatorie:
     slot_giornalieri:
       - day: "2025-09-23"
         slots:
-          - startSlot: "09:30"
-            endSlot: "11:45"
+          - startSlot: "09:00"
+            endSlot: "12:00"
             procedure: ""
-          - startSlot: "14:15"
+          - startSlot: "14:00"
             endSlot: "17:00"
             procedure: ""
