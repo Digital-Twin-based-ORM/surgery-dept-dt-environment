@@ -23,4 +23,10 @@ public class GlobalValues {
     public static final String BELONGS_TO_NAME = "belongsTo";
     public static final String BELONGS_TO_TYPE = "belongsTo_rel";
 
+    /* DEPARTMENT */
+    public static final String SUPERVISE_SURGERY_NAME = "supervise";
+    public static final String SUPERVISE_SURGERY_TYPE = "supervise_rel";
+    public static final String OPERATING_ROOMS_NAME = "operatingRooms";
+    public static final String OPERATING_ROOMS_TYPE = "operatingRooms_rel";
+
 }

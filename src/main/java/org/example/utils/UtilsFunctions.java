@@ -1,14 +1,18 @@
 package org.example.utils;
 
 import com.google.gson.*;
+import org.example.businessLayer.adapter.OperatingRoomDailySlot;
 import org.example.domain.model.DailySlot;
 import org.example.domain.model.SingleSlot;
 import org.example.domain.model.SurgeryEventInTime;
 import org.example.domain.model.SurgeryEvents;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 public class UtilsFunctions {
+
+    public static DateTimeFormatter STANDARD_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public static JsonObject stringToJsonObjectGson(String json) {
         Gson gson = new Gson();
@@ -68,20 +72,42 @@ public class UtilsFunctions {
     }
 
     private static DailySlot findDailySlots(JsonObject json) {
-        ArrayList<SingleSlot> dailySlots = new ArrayList<>();
-        String day = json.get("day").getAsString();
-        JsonArray slots = json.getAsJsonArray("slots");
-        for(JsonElement slot : slots.asList()) {
-            JsonObject slotObj = slot.getAsJsonObject();
-            dailySlots.add(
-                    new SingleSlot(
-                            slotObj.get("startSlot").getAsString(),
-                            slotObj.get("endSlot").getAsString(),
-                            slotObj.get("procedure").getAsString()
-                    )
-            );
+        try {
+            System.out.println(json);
+            ArrayList<SingleSlot> dailySlots = new ArrayList<>();
+            String day = json.get("day").getAsString();
+            JsonArray slots = json.getAsJsonArray("slots");
+            for (JsonElement slot : slots.asList()) {
+                JsonObject slotObj = slot.getAsJsonObject();
+                dailySlots.add(
+                        new SingleSlot(
+                                slotObj.get("startSlot").getAsString(),
+                                slotObj.get("endSlot").getAsString(),
+                                slotObj.get("procedure").getAsString()
+                        )
+                );
+            }
+            return new DailySlot(day, dailySlots);
+        } catch (Exception e) {
+            System.out.println("ERROR parsing daily slots: " + e.getMessage());
+            throw e;
         }
-        return new DailySlot(day, dailySlots);
+    }
+
+    public static String convertSlotToJson(OperatingRoomDailySlot roomDailySlot) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("operatingRoomId", roomDailySlot.operatingRoomId());
+        obj.addProperty("day", roomDailySlot.dailySlot().getLocalDateDay().toString());
+        JsonArray slots = new JsonArray();
+        for(SingleSlot singleSlot : roomDailySlot.dailySlot().getSlots()) {
+            JsonObject slot = new JsonObject();
+            slot.addProperty("startSlot", singleSlot.getStartSlot());
+            slot.addProperty("endSlot", singleSlot.getEndSlot());
+            slot.addProperty("procedure", singleSlot.getProcedure());
+            slots.add(slot);
+        }
+        obj.add("slots", slots);
+        return obj.toString();
     }
 
     public static SurgeryEventInTime surgeryEventInTimeFromJson(String content) {

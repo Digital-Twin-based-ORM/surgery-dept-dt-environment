@@ -8,6 +8,20 @@ public class SingleSlot {
     private String startSlot;
     private String endSlot;
     private String procedure;
+    public SingleSlot() {
+    }
+
+    public void setStartSlot(String startSlot) {
+        this.startSlot = startSlot;
+    }
+
+    public void setEndSlot(String endSlot) {
+        this.endSlot = endSlot;
+    }
+
+    public void setProcedure(String procedure) {
+        this.procedure = procedure;
+    }
 
     public SingleSlot(String startSlot, String endSlot, String procedure) {
         this.startSlot = startSlot;
