@@ -50,6 +50,8 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
     public static final String SURGERY_CREATED = "surgeryCreated";
     public static final String SURGERY_PRIORITY_CHANGED = "surgeryPriorityChanged";
     public static final String SURGERY_EXECUTED_IN = "surgeryExecutedIn";
+    public static final String CURRENT_DATE = "currentDate";
+    public static final String SURGERY_CANCELLED = "surgeryCancelled";
 
     private String baseTopic = "";
 
@@ -64,23 +66,33 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
         this.addSurgeryKpiEventTopic(M17);
         this.addSurgeryKpiEventTopic(M26);
 
+        this.addStringProperty(CURRENT_DATE, "");
+
         this.builder.addPhysicalAssetEventAndTopic(SLOT_SET, "text/plain", this.baseTopic + SLOT_SET, content -> {
             // get the daily slots of the current working day and the specific operating room
             JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(content);
+            assert jsonObject != null;
             String operatingRoomId = jsonObject.get("operatingRoomId").getAsString();
             DailySlot slots = UtilsFunctions.getDailySlotsFromJson(jsonObject);
             return new OperatingRoomDailySlot(operatingRoomId, slots);
         });
+
         this.builder.addPhysicalAssetEventAndTopic(NEW_SURGERY_EVENT, "text/plain", this.baseTopic + NEW_SURGERY_EVENT, UtilsFunctions::surgeryEventInTimeFromJson);
 
         this.builder.addPhysicalAssetEventAndTopic(SURGERY_CREATED, "text/plain", this.baseTopic + SURGERY_CREATED, content -> {
-            String id = getJsonField(content, "idSurgery");
-            LocalDateTime admissionDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "admissionDate")));
-            LocalDateTime programmedDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "programmedDate")));
-            Integer priority = getJsonIntField(content, "priority");
-            HospitalizationRegime hospitalizationRegime = HospitalizationRegime.valueOf(getJsonField(content, "hospitalizationRegime"));
-            assert priority != null;
-            return new Surgery(id, programmedDate, admissionDate, PriorityClass.values()[priority], hospitalizationRegime);
+            try {
+                String id = getJsonField(content, "idSurgery");
+                LocalDateTime admissionDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "admissionDate")));
+                LocalDateTime programmedDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "programmedDate")));
+                String priority = getJsonField(content, "priority");
+                HospitalizationRegime hospitalizationRegime = HospitalizationRegime.valueOf(getJsonField(content, "hospitalizationRegime"));
+                Integer estimatedTime = UtilsFunctions.getJsonIntField(content, "estimatedTime");
+                assert estimatedTime != null;
+                return new Surgery(id, programmedDate, admissionDate, PriorityClass.valueOf(priority), hospitalizationRegime, estimatedTime);
+            } catch (Exception e) {
+                System.out.println("ERRORE DEPARTMENT: " + e.getMessage());
+                return null;
+            }
         });
 
         this.builder.addPhysicalAssetEventAndTopic(SURGERY_PRIORITY_CHANGED, "text/plain", this.baseTopic + SURGERY_PRIORITY_CHANGED, content -> {
@@ -98,6 +110,7 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
         this.addStringEvent(WORKING_DAY_STARTED);
         this.addStringEvent(WORKING_DAY_TERMINATED);
+        this.addStringEvent(SURGERY_CANCELLED);
     }
 
     public void addSurgeryKpiEventTopic(String kpi) throws MqttPhysicalAdapterConfigurationException {
