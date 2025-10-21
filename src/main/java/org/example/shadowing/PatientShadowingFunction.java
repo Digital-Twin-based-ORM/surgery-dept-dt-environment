@@ -13,22 +13,23 @@ import it.wldt.core.state.DigitalTwinStateRelationshipInstance;
 import it.wldt.exception.EventBusException;
 import it.wldt.exception.WldtDigitalTwinStateEventNotificationException;
 import it.wldt.exception.WldtDigitalTwinStateException;
-import org.example.digitalAdapter.MqttPatientDigitalAdapter;
+import org.example.digitalAdapter.mqtt.MqttPatientDigitalAdapter;
 import org.example.domain.model.HealthInformation;
 import org.example.dt.property.PatientProperties;
 import org.example.physicalAdapter.MqttPatientPhysicalAdapterBuilder;
+import org.example.utils.UtilsFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.*;
 
+import static org.example.digitalAdapter.mqtt.MqttPatientDigitalAdapter.NEW_HEART_RATE;
 import static org.example.utils.GlobalValues.*;
 
 public class PatientShadowingFunction extends AbstractShadowing {
 
     private static final Logger logger = LoggerFactory.getLogger(PatientShadowingFunction.class);
-    private Timer healthCheck = new Timer("HealthCheck");
     private HealthInformation healthInformation = new HealthInformation();
     private String lastCurrentlyLocatedRelationshipInstanceKey = "";
 
@@ -98,8 +99,8 @@ public class PatientShadowingFunction extends AbstractShadowing {
                 int value = (Integer) physicalAssetPropertyWldtEvent.getBody();
                 healthInformation.addRegisteredBPM(physicalAssetPropertyWldtEvent.getCreationTimestamp(), value);
                 try {
-                    this.publishPhysicalAssetActionWldtEvent("newHeartRate", value);
                     checkPatientHealth();
+                    this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(NEW_HEART_RATE, value, UtilsFunctions.getCurrentTimestamp()));
                 } catch (EventBusException | WldtDigitalTwinStateEventNotificationException e) {
                     throw new RuntimeException(e);
                 }
