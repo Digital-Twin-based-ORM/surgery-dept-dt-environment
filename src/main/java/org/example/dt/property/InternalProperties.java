@@ -9,6 +9,7 @@ public class InternalProperties {
     protected final ArrayList<PhysicalAssetProperty<?>> properties = new ArrayList<>();
 
     public void addProperty(PhysicalAssetProperty<?> value) {
+        // TODO lasciarli come immutabili?
         value.setImmutable(true);
         properties.add(value);
     }

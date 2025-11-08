@@ -1,4 +1,4 @@
-package org.example.digitalAdapter.handler;
+package org.example.digitalAdapter.custom.handler;
 
 import java.util.function.Function;
 

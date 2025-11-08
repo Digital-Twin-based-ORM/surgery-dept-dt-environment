@@ -7,8 +7,9 @@ import it.wldt.core.state.DigitalTwinStateChange;
 import it.wldt.core.state.DigitalTwinStateEvent;
 import it.wldt.core.state.DigitalTwinStateEventNotification;
 import it.wldt.exception.EventBusException;
+import org.example.businessLayer.adapter.SurgeryKpiNotification;
 import org.example.digitalAdapter.configuration.SurgeryDepConfiguration;
-import org.example.digitalAdapter.handler.DigitalHandler;
+import org.example.digitalAdapter.custom.handler.DigitalHandler;
 import org.example.utils.MqttPropertiesConfig;
 import org.example.utils.Pair;
 import org.slf4j.Logger;
@@ -126,10 +127,11 @@ public class SurgeryKpiDigitalAdapter extends DigitalAdapter<SurgeryDepConfigura
         return mqttConfiguration;
     }
 
-    private String convertKpiToJson(Pair<String, String> kpi) {
+    private String convertKpiToJson(SurgeryKpiNotification kpi) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("surgeryId", kpi.getLeft());
-        obj.addProperty("value", kpi.getRight());
+        obj.addProperty("surgeryId", kpi.surgeryId());
+        obj.addProperty("value", kpi.value());
+        obj.addProperty("typeOfSurgery", kpi.typeOfSurgery());
         return obj.toString();
     }
 }
