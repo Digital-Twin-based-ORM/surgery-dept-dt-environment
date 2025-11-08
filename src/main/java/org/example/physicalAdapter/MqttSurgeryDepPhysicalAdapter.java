@@ -9,11 +9,13 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.example.businessLayer.adapter.OperatingRoomDailySlot;
 import org.example.businessLayer.adapter.SurgeryKpiNotification;
 import org.example.domain.model.*;
+import org.example.domain.model.fhir.LocationType;
 import org.example.utils.UtilsFunctions;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import static org.example.utils.GlobalValues.*;
 import static org.example.utils.UtilsFunctions.getJsonField;
 import static org.example.utils.UtilsFunctions.getJsonIntField;
 
@@ -52,6 +54,8 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
     public static final String SURGERY_EXECUTED_IN = "surgeryExecutedIn";
     public static final String CURRENT_DATE = "currentDate";
     public static final String SURGERY_CANCELLED = "surgeryCancelled";
+    public static final String DEPARTMENT_NAME = "departmentName";
+    static public final String LOCATION_TYPE = "type";
 
     private String baseTopic = "";
 
@@ -108,6 +112,17 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
             return new SurgeryLocation(idSurgery, idOperationRoom);
         });
 
+        this.addStringProperty(DEPARTMENT_NAME, "");
+        this.addStringProperty(TYPE, DEPARTMENT_TYPE);
+
+        builder.addPhysicalAssetPropertyAndTopic(LOCATION_TYPE, LocationType.OutpatientFacility, this.baseTopic + LOCATION_TYPE, content -> {
+            if(LocationType.isValid(content)) {
+                return LocationType.valueOf(content);
+            } else {
+                return LocationType.SurgeryClinic;
+            }
+        });
+
         this.addStringEvent(WORKING_DAY_STARTED);
         this.addStringEvent(WORKING_DAY_TERMINATED);
         this.addStringEvent(SURGERY_CANCELLED);
@@ -117,7 +132,7 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
         this.builder.addPhysicalAssetEventAndTopic(kpi, "text/plain", this.baseTopic + kpi, it -> {
             JsonObject json = UtilsFunctions.stringToJsonObjectGson(it);
             assert json != null;
-            return new SurgeryKpiNotification(json.get("surgeryId").getAsString(), json.get("value").getAsFloat());
+            return new SurgeryKpiNotification(json.get("surgeryId").getAsString(), json.get("value").getAsFloat(), json.get("typeOfSurgery").getAsString());
         });
     }
 

@@ -8,9 +8,13 @@ import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationE
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.example.utils.UtilsFunctions;
 
-public class MqttPatientPhysicalAdapterBuilder {
+import static org.example.utils.GlobalValues.PATIENT_TYPE;
+import static org.example.utils.GlobalValues.TYPE;
+
+public class MqttPatientPhysicalAdapterBuilder extends AbstractMqttPhysicalAdapter {
 
     public final static String SURGERY_REQUEST = "newSurgeryRequested";
+    private String baseTopic = "";
     MqttPhysicalAdapterConfigurationBuilder builder;
     MqttPhysicalAdapter adapter = null;
 
@@ -18,14 +22,17 @@ public class MqttPatientPhysicalAdapterBuilder {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
         // TODO DT storage
         // Configuring the mqtt physical and http digital adapter
-        this.addStringProperty("currentLocation", "", "anylogic/id/Patient/" + idDT + "/currentLocation");
+        this.baseTopic = "anylogic/id/Patient/" + idDT;
+        this.addStringProperty("currentLocation", "", baseTopic + "/currentLocation");
         this.addIntProperty("heartRate", 0, "patient/" + idDT + "/heartRate");
-        this.builder.addPhysicalAssetEventAndTopic("bpmAnomaly", "text/plain", "anylogic/id/Patient/" + idDT + "/bpmAnomaly", String::toString);
-        this.builder.addPhysicalAssetEventAndTopic(SURGERY_REQUEST, "text/plain", "anylogic/id/Patient/" + idDT + "/" + SURGERY_REQUEST, (String i) ->  {
+        this.builder.addPhysicalAssetEventAndTopic("bpmAnomaly", "text/plain", baseTopic + "/bpmAnomaly", String::toString);
+        this.addStringProperty(TYPE, PATIENT_TYPE);
+        this.builder.addPhysicalAssetEventAndTopic(SURGERY_REQUEST, "text/plain", baseTopic + "/" + SURGERY_REQUEST, (String i) ->  {
             JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(i);
             assert jsonObject != null;
             return jsonObject.get("uri").getAsString();
         });
+
     }
 
     void addStringProperty(String key, String initialValue, String topic) throws MqttPhysicalAdapterConfigurationException {
@@ -41,5 +48,15 @@ public class MqttPatientPhysicalAdapterBuilder {
     public MqttPhysicalAdapter build(String id) throws MqttPhysicalAdapterConfigurationException, MqttException {
         adapter = new MqttPhysicalAdapter(id, builder.build());
         return adapter;
+    }
+
+    @Override
+    public String getBaseTopic() {
+        return baseTopic;
+    }
+
+    @Override
+    public MqttPhysicalAdapterConfigurationBuilder getBuilder() {
+        return builder;
     }
 }

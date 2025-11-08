@@ -1,18 +1,12 @@
 package org.example.physicalAdapter;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfigurationBuilder;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
-import org.example.domain.model.DailySlot;
-import org.example.domain.model.SingleSlot;
+import org.example.domain.model.fhir.LocationType;
 import org.example.utils.UtilsFunctions;
 
-import java.util.ArrayList;
-
-import static org.example.utils.UtilsFunctions.stringToJsonObjectGson;
+import static org.example.utils.GlobalValues.*;
 
 public class MqttOperatingRoomPhysicalAdapter extends AbstractMqttPhysicalAdapter{
     private String baseTopic = "";
@@ -24,6 +18,7 @@ public class MqttOperatingRoomPhysicalAdapter extends AbstractMqttPhysicalAdapte
     static public final String BUSY = "busy";
     static public final String ASSIGN_DAILY_SLOTS = "assignDailySlots";
     static public final String ADD_NEW_SLOT = "addNewSlot";
+    static public final String LOCATION_TYPE = "type";
     private final MqttPhysicalAdapterConfigurationBuilder builder;
     public MqttOperatingRoomPhysicalAdapter(String idDT, String host, Integer port) throws MqttPhysicalAdapterConfigurationException {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
@@ -31,10 +26,19 @@ public class MqttOperatingRoomPhysicalAdapter extends AbstractMqttPhysicalAdapte
         this.addStringProperty(STATE, "");
         this.addStringProperty(LAST_DISINFECTION, "");
 
+        builder.addPhysicalAssetPropertyAndTopic(LOCATION_TYPE, LocationType.SurgeryClinic, this.baseTopic + LOCATION_TYPE, content -> {
+            if(LocationType.isValid(content)) {
+                return LocationType.valueOf(content);
+            } else {
+                return LocationType.SurgeryClinic;
+            }
+        });
+
         this.addStringEvent(DISINFECTION_TERMINATED);
         this.addStringEvent(DISINFECTION_STARTED);
         this.addStringEvent(NOW_AVAILABLE);
         this.addStringEvent(BUSY);
+        this.addStringProperty(TYPE, OPERATING_ROOM_TYPE);
 
         this.builder.addPhysicalAssetEventAndTopic(ASSIGN_DAILY_SLOTS, "text/plain", getBaseTopic() + ASSIGN_DAILY_SLOTS, i->i);
         this.builder.addPhysicalAssetEventAndTopic(ADD_NEW_SLOT, "text/plain", getBaseTopic() + ADD_NEW_SLOT, UtilsFunctions::getDailySlotsFromJson);

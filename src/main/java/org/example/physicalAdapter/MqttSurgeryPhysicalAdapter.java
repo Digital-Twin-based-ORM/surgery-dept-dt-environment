@@ -7,8 +7,10 @@ import org.example.businessLayer.adapter.OperatingRoomInfo;
 import org.example.domain.model.PriorityClass;
 import org.example.domain.model.SurgeryEventInTime;
 import org.example.domain.model.SurgeryEvents;
+import org.example.domain.model.fhir.SurgeryStatus;
 import org.example.dt.property.SurgeryProperties;
 
+import static org.example.utils.GlobalValues.*;
 import static org.example.utils.UtilsFunctions.getJsonField;
 
 public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
@@ -51,18 +53,26 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
                 throw new IllegalArgumentException();
         });
 
+        builder.addPhysicalAssetPropertyAndTopic(STATUS_KEY, SurgeryStatus.UNKNOWN, this.baseTopic + STATUS_KEY, content -> {
+            if(SurgeryStatus.isValid(content)) {
+                return SurgeryStatus.valueOf(content);
+            } else {
+                return SurgeryStatus.UNKNOWN;
+            }
+        });
+
         this.addStringEvent(WARNING_KEY);
         this.addStringEvent(PATIENT_ID_KEY);
         this.addStringEvent(PROGRAMMED_IN_KEY);
         this.addStringEvent(SURGERY_TERMINATED);
         this.addStringEvent(SURGERY_CREATED_NOTIFICATION);
+        this.addStringProperty(TYPE, SURGERY_TYPE);
 
         this.addStringProperty(EXECUTION_START_KEY, ""); // redundant (not necessary, only for tracking reason)
         this.addStringProperty(EXECUTION_END_KEY, ""); // redundant (not necessary, only for tracking reason)
         this.addStringProperty(SURGERY_INCISION_KEY, ""); // redundant (not necessary, only for tracking reason)
         this.addStringProperty(SURGERY_SUTURE_KEY, ""); // redundant (not necessary, only for tracking reason)
         this.addStringProperty(PROGRAMMED_DATE, properties.getProgrammedDate());
-        this.addStringProperty(STATUS_KEY, "");
         this.addStringProperty(LAST_EVENT_KEY, "");
         this.addStringProperty(ESTIMATED_TIME_KEY, String.format("%d", properties.getEstimatedTime()));
 
@@ -74,7 +84,6 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
             return new OperatingRoomInfo(id, uri);
         });
     }
-
 
     @Override
     public String getBaseTopic() {
