@@ -3,6 +3,7 @@ package org.example.dt.property;
 import it.wldt.adapter.physical.PhysicalAssetProperty;
 import org.example.domain.model.HospitalizationRegime;
 import org.example.domain.model.PriorityClass;
+import org.example.domain.model.fhir.CodeableConcept;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,12 +16,11 @@ public class SurgeryProperties extends InternalProperties {
     public final static String CATEGORY_PROPERTY_KEY = "category";
     public final static String CODE_PROPERTY_KEY = "code";
     public final static String CREATION_TIMESTAMP_PROPERTY_KEY = "creationTimestamp";
-    public final static String SCORE_KEY = "score";
+    public final static String SCORE_KEY = "score"; // TODO
     public final static String ADMISSION_TIME_KEY = "admissionTime";
-
-    private final String reason;
-    private final String category; // procedure
-    private final String code;
+    private final CodeableConcept reason;
+    private final CodeableConcept category; // procedure
+    private final CodeableConcept code;
     private final String creationTimestamp;
     private final String admissionDate;
     private final String programmedDate;
@@ -40,7 +40,7 @@ public class SurgeryProperties extends InternalProperties {
         return programmedDate;
     }
 
-    public SurgeryProperties(String reason, String category, String code, String creationTimestamp, String admissionDate, String programmedDate, PriorityClass priority, HospitalizationRegime regime, int estimatedTime) {
+    public SurgeryProperties(CodeableConcept reason, CodeableConcept category, CodeableConcept code, String creationTimestamp, String admissionDate, String programmedDate, PriorityClass priority, HospitalizationRegime regime, int estimatedTime) {
         this.reason = reason;
         this.category = category;
         this.code = code;
@@ -62,15 +62,15 @@ public class SurgeryProperties extends InternalProperties {
         return estimatedTime;
     }
 
-    public String getReason() {
+    public CodeableConcept getReason() {
         return reason;
     }
 
-    public String getCategory() {
+    public CodeableConcept getCategory() {
         return category;
     }
 
-    public String getCode() {
+    public CodeableConcept getCode() {
         return code;
     }
 

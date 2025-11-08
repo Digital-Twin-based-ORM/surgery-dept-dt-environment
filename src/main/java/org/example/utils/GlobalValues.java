@@ -1,6 +1,14 @@
 package org.example.utils;
 
 public class GlobalValues {
+
+    /* COMMON PARAMETERS */
+    public final static String TYPE = "typeOfDt";
+    public final static String PATIENT_TYPE = "patient";
+    public final static String SURGERY_TYPE = "surgery";
+    public final static String OPERATING_ROOM_TYPE = "operatingRoom";
+    public final static String DEPARTMENT_TYPE = "department";
+    public final static String VSM_TYPE = "vsm";
     /* PATIENT */
     public static final String SURGERY_RELATIONSHIP_NAME = "surgery";
     public static final String SURGERY_RELATIONSHIP_TYPE = "surgery_rel";

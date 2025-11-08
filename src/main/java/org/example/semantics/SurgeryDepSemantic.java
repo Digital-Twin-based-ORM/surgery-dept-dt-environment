@@ -5,34 +5,39 @@ import io.github.webbasedwodt.model.ontology.rdf.*;
 import it.wldt.core.state.DigitalTwinStateAction;
 import it.wldt.core.state.DigitalTwinStateProperty;
 import it.wldt.core.state.DigitalTwinStateRelationship;
-import it.wldt.core.state.DigitalTwinStateRelationshipInstance;
-import org.example.domain.model.fhir.DeviceStatus;
-import org.example.domain.model.fhir.SurgeryStatus;
 import org.example.domain.model.fhir.CodeableConcept;
+import org.example.domain.model.fhir.LocationType;
+import org.example.physicalAdapter.MqttOperatingRoomPhysicalAdapter;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.example.physicalAdapter.MqttVSMPhysicalAdapter.*;
+import static org.example.physicalAdapter.MqttSurgeryDepPhysicalAdapter.DEPARTMENT_NAME;
+import static org.example.physicalAdapter.MqttSurgeryDepPhysicalAdapter.LOCATION_TYPE;
 import static org.example.semantics.CodeSystems.SNOMED_CT;
 import static org.example.semantics.CodeSystems.SNOMED_URI_PREFIX;
 
-public class MedicalDeviceSemantic extends AbstractSemantic implements DigitalTwinSemantics {
-    public static final String HEART_RATE_SCTID = "86184003";
+public class SurgeryDepSemantic extends AbstractSemantic implements DigitalTwinSemantics {
+    public static final String SURGICAL_DEPARTMENT_SCTID = "309967005";
     private static final Map<String, RdfUriResource> PROPERTIES_DOMAIN_TAG = Map.of(
-            HEART_RATE, new RdfUriResource(URI.create("http://hl7.org/fhir/type")),
-            SERIAL_CODE, new RdfUriResource(URI.create("http://hl7.org/fhir/serialNumber")),
-            DEVICE_STATUS, new RdfUriResource(URI.create("http://hl7.org/fhir/status"))
+            DEPARTMENT_NAME, new RdfUriResource(URI.create("http://hl7.org/fhir/name")),
+            LOCATION_TYPE, new RdfUriResource(URI.create("http://hl7.org/fhir/type"))
     );
     private static final Map<String, RdfUriResource> RELATIONSHIPS_DOMAIN_TAG = Map.of(
 
     );
     private static final Map<String, RdfUriResource> ACTIONS_DOMAIN_TAG = Map.of();
+
+    @Override
+    protected Map<String, RdfUriResource> getRelationshipDomainTag() {
+        return RELATIONSHIPS_DOMAIN_TAG;
+    }
+
     @Override
     public List<RdfClass> getDigitalTwinTypes() {
-        return List.of(new RdfClass(URI.create("http://hl7.org/fhir/Device")));
+        return List.of(new RdfClass(URI.create("http://hl7.org/fhir/Location")));
     }
 
     @Override
@@ -53,22 +58,34 @@ public class MedicalDeviceSemantic extends AbstractSemantic implements DigitalTw
     @Override
     public Optional<List<RdfUnSubjectedTriple>> mapData(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         switch (digitalTwinStateProperty.getKey()) {
-
-            case HEART_RATE:
+            case DEPARTMENT_NAME:
+                return Optional.of(List.of(
+                                new RdfUnSubjectedTriple(
+                                        new RdfProperty(URI.create("http://www.hl7.org/fhir/name")),
+                                        new RdfBlankNode("department-name-string", List.of(
+                                                new RdfUnSubjectedTriple(
+                                                        new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
+                                                        new RdfLiteral<>(digitalTwinStateProperty.getValue())
+                                                )
+                                        ))
+                                )
+                        )
+                );
+            case MqttOperatingRoomPhysicalAdapter.LOCATION_TYPE:
                 return Optional.of(List.of(
                         new RdfUnSubjectedTriple(
                                 new RdfProperty(URI.create("http://hl7.org/fhir/type")),
-                                new RdfBlankNode("device-type-definition", List.of(
+                                new RdfBlankNode("location-type-definition", List.of(
                                         new RdfUnSubjectedTriple(
                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/coding")),
-                                                new RdfBlankNode("device-type-coding", List.of(
+                                                new RdfBlankNode("location-type-coding", List.of(
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")),
                                                                 new RdfUriResource(URI.create(SNOMED_URI_PREFIX + ((CodeableConcept) digitalTwinStateProperty.getValue()).getCode()))
                                                         ),
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/system")),
-                                                                new RdfBlankNode("device-type-system", List.of(
+                                                                new RdfBlankNode("location-type-system", List.of(
                                                                         new RdfUnSubjectedTriple(
                                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
                                                                                 new RdfUriResource(URI.create(SNOMED_CT))
@@ -77,55 +94,38 @@ public class MedicalDeviceSemantic extends AbstractSemantic implements DigitalTw
                                                         ),
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/code")),
-                                                                new RdfBlankNode("device-type-coding-value", List.of(
+                                                                new RdfBlankNode("location-type-coding-value", List.of(
                                                                         new RdfUnSubjectedTriple(
                                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
-                                                                                new RdfLiteral<>(HEART_RATE_SCTID)
+                                                                                new RdfLiteral<>(SURGICAL_DEPARTMENT_SCTID)
+                                                                        )
+                                                                ))
+                                                        )
+                                                )
+                                                )
+                                        ),
+                                        new RdfUnSubjectedTriple(
+                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/coding")),
+                                                new RdfBlankNode("location-type-coding-hl7", List.of(
+                                                        new RdfUnSubjectedTriple(
+                                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/code")),
+                                                                new RdfBlankNode("location-type-coding-value-hl7", List.of(
+                                                                        new RdfUnSubjectedTriple(
+                                                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
+                                                                                new RdfLiteral<>(((LocationType)digitalTwinStateProperty.getValue()).code)
                                                                         )
                                                                 ))
                                                         )
                                                 )
                                                 )
                                         )
-                                ))
-                        )
-                ));
-
-            case SERIAL_CODE:
-                return Optional.of(List.of(
-                        new RdfUnSubjectedTriple(
-                                new RdfProperty(URI.create("http://www.hl7.org/fhir/text")),
-                                new RdfBlankNode("device-serial-number-string-description", List.of(
-                                        new RdfUnSubjectedTriple(
-                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
-                                                new RdfLiteral<>((String)digitalTwinStateProperty.getValue())
-                                        )
-                                ))
-                            )
-                        )
-                );
-
-            case DEVICE_STATUS:
-                return Optional.of(List.of(
-                                new RdfUnSubjectedTriple(
-                                        new RdfProperty(URI.create("http://www.hl7.org/fhir/status")),
-                                        new RdfBlankNode("device-status-string", List.of(
-                                                new RdfUnSubjectedTriple(
-                                                        new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
-                                                        new RdfLiteral<>(((DeviceStatus)digitalTwinStateProperty.getValue()).code)
-                                                )
-                                        ))
+                                )
                                 )
                         )
-                );
+                ));
 
             default:
                 return Optional.empty();
         }
-    }
-
-    @Override
-    protected Map<String, RdfUriResource> getRelationshipDomainTag() {
-        return RELATIONSHIPS_DOMAIN_TAG;
     }
 }
