@@ -128,7 +128,6 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
                         notifySurgeryKpi(body, M26, physicalAssetEventWldtEvent.getCreationTimestamp());
                     }
                     case SLOT_SET -> {
-                        // TODO relationship delle sale operatorie per sapere quali sono presenti nel dipartimento operatorio (con le istanze)
                         // set the daily slots of the current working day and the specific operating room
                         OperatingRoomDailySlot slotTemp = (OperatingRoomDailySlot) physicalAssetEventWldtEvent.getBody();
                         Optional<DigitalTwinStateProperty<?>> currentDateOpt = this.digitalTwinStateManager.getDigitalTwinState().getProperty(CURRENT_DATE);
@@ -201,6 +200,7 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
                         logger.info("** WORKING DAY STARTED **");
                     }
                     case WORKING_DAY_TERMINATED -> {
+                        // TODO remove supervised surgery relationships
                         logger.info("** WORKING DAY TERMINATED **");
                         logger.info("Interventi chirurgici: " + surgeries.size());
                         for (Surgery surgery : surgeries) {
@@ -267,15 +267,16 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
     private void notifyOperatingRoomKpi(String orId, float value, String type, long creationTimestamp) throws WldtDigitalTwinStateEventNotificationException {
         this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(
                 OPERATING_ROOM_KPI_UPDATE,
-                new KpiDigitalNotification(orId, type, value, LocalDateTime.now()),
+                new KpiDigitalNotification(orId, type, "", value, LocalDateTime.now()),
                 creationTimestamp
         ));
     }
 
     private void notifySurgeryKpi(SurgeryKpiNotification body, String type, long creationTimestamp) throws WldtDigitalTwinStateEventNotificationException {
+        logger.info("NOTIFYING NEW SURGERY KPI...");
         this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(
                 SURGERY_KPI_UPDATE,
-                new KpiDigitalNotification(body.surgeryId(), type, body.value(), LocalDateTime.now()),
+                new KpiDigitalNotification(body.surgeryId(), type, body.typeOfSurgery(), body.value(), LocalDateTime.now()),
                 creationTimestamp
         ));
     }
@@ -306,7 +307,9 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
             if(relationship.isPresent()) {
                 List<String> instancesKey = relationship.get().getInstances().stream().map(DigitalTwinStateRelationshipInstance::getKey).toList();
                 for(String key : instancesKey) {
+                    this.digitalTwinStateManager.startStateTransaction();
                     this.digitalTwinStateManager.deleteRelationshipInstance(relationship.get().getName(), key);
+                    this.digitalTwinStateManager.commitStateTransaction();
                 }
             }
         }

@@ -16,6 +16,7 @@ import it.wldt.exception.WldtDigitalTwinStateEventNotificationException;
 import it.wldt.exception.WldtDigitalTwinStateException;
 import it.wldt.exception.WldtDigitalTwinStatePropertyException;
 import org.example.businessLayer.adapter.OperatingRoomInfo;
+import org.example.businessLayer.adapter.SurgeryKpiNotification;
 import org.example.businessLayer.adapter.SurgeryPropertyChanged;
 import org.example.domain.model.*;
 import org.example.dt.policy.WriteOnceProperties;
@@ -46,10 +47,12 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
     private PhysicalAssetRelationship<String> programmedOpRoomRelationship = null;
     private PhysicalAssetRelationship<String> executedOpRoomRelationship = null;
     private String idDT;
+    private SurgeryProperties properties;
 
-    public SurgeryShadowingFunction(String id, InternalProperties properties) {
+    public SurgeryShadowingFunction(String id, SurgeryProperties properties) {
         super("surgery-" + id + "-shadowing", properties);
         this.idDT = id;
+        this.properties = (SurgeryProperties) properties;
     }
     @Override
     public Logger getLogger() {
@@ -258,7 +261,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
             logger.info("Start Time Tardiness: " + minutes);
             System.out.println("STT equals to " + minutes.intValue() + " minutes and " + ((minutes - minutes.intValue()) * 60) + "seconds" );
             // notify event to digital adapter
-            digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M10, new Pair<String, String>(this.idDT, "" + startTimeTardiness), triggerTime.atZone(ZoneId.systemDefault())
+            digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M10, new SurgeryKpiNotification(this.idDT, startTimeTardiness,  this.properties.getCategory().getDescription()), triggerTime.atZone(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()));
         } else {
@@ -279,7 +282,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                 logger.info("PzPr: " + pzPrDateTime + " - stAnest: " + stAnestDateTime);
                 long tAnest = Duration.between(stAnestDateTime, pzPrDateTime).toSeconds();
                 // notify event to digital adapter
-                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M15, new Pair<String, String>(this.idDT, "" + tAnest), timestamp));
+                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M15, new SurgeryKpiNotification(this.idDT, tAnest, this.properties.getCategory().getDescription()), timestamp));
                 logger.info("T Anest: " + tAnest + " seconds");
             }
             if(!Objects.equals(eventsTimestamps.get(SurgeryEvents.EndCh), "")) {
@@ -288,7 +291,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                 LocalDateTime stChDateTime = LocalDateTime.parse(eventsTimestamps.get(SurgeryEvents.StCh));
                 long tChir = Duration.between(stChDateTime, endChDateTime).toSeconds();
                 // notify event to digital adapter
-                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M14, new Pair<String, String>(this.idDT, "" + tChir), timestamp));
+                digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M14, new SurgeryKpiNotification(this.idDT, tChir, this.properties.getCategory().getDescription()), timestamp));
                 logger.info("T Chir: " + tChir + " seconds");
                 if(!Objects.equals(eventsTimestamps.get(SurgeryEvents.OutSO), "")) {
                     // M17
@@ -298,7 +301,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
 
                     float touchTime = Duration.between(stAnestDateTime, outSoDateTime).toSeconds();
                     // notify event to digital adapter
-                    digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M17, new Pair<String, String>(idDT, "" + touchTime), timestamp));
+                    digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M17, new SurgeryKpiNotification(idDT, touchTime, this.properties.getCategory().getDescription()), timestamp));
                     logger.info("Touch time: " + touchTime + " seconds");
                     // M26
                     long valueAddedTimeDen = Duration.between(inSoDateTime, outSoDateTime).toSeconds();;;

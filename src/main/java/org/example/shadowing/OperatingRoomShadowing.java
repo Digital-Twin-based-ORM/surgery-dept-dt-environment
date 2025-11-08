@@ -85,9 +85,8 @@ public class OperatingRoomShadowing extends AbstractShadowing {
         if(surgeryDepUri.isPresent()) {
             try {
                 this.digitalTwinStateManager.startStateTransaction();
-                String operatingRoomUri = surgeryDepUri.get();
 
-                this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(BELONGS_TO_NAME, operatingRoomUri, "surgeryDepartment"));
+                this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(BELONGS_TO_NAME, surgeryDepUri.get(), "surgeryDepartment"));
                 this.digitalTwinStateManager.commitStateTransaction();
             } catch (WldtDigitalTwinStateException e) {
                 throw new RuntimeException(e);
