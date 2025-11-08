@@ -1,4 +1,4 @@
-package org.example.infrastructureLayer.repository;
+package org.example.infrastructureLayer.persistence;
 
 import org.example.businessLayer.adapter.OperatingRoomInfo;
 

@@ -1,6 +1,5 @@
 package org.example.infrastructureLayer.persistence.repository;
 
-import org.example.businessLayer.adapter.KpiSubject;
 import org.example.businessLayer.boundaries.KpiDataSourceGateway;
 import org.example.digitalAdapter.sql.KpiRepositoryConfiguration;
 import org.slf4j.Logger;
@@ -18,6 +17,7 @@ public class KpiDataSourceGatewayImpl implements KpiDataSourceGateway {
     public static final String COL_VALUE = "value";
     public static final String COL_TIMESTAMP = "timestamp";
     public static final String COL_PERCENTAGE = "percentage";
+    public static final String COL_SURGERY_TYPE = "surgeryType";
     private final Logger logger = LoggerFactory.getLogger(KpiDataSourceGatewayImpl.class);
     private KpiRepositoryConfiguration configuration;
     private Connection conn;
@@ -81,6 +81,7 @@ public class KpiDataSourceGatewayImpl implements KpiDataSourceGateway {
                 COL_ID + " INT PRIMARY KEY AUTO_INCREMENT," +
                 COL_KPI_TYPE + " TEXT," +
                 COL_SURGERY_ID + " TEXT," +
+                COL_SURGERY_TYPE + " TEXT," +
                 COL_VALUE + " FLOAT,"+
                 COL_TIMESTAMP + " TEXT" +
                 ")";
@@ -110,9 +111,9 @@ public class KpiDataSourceGatewayImpl implements KpiDataSourceGateway {
     }
 
     @Override
-    public boolean addKpiRecord(KpiSubject kpiSubject, String id, String type, float value, LocalDateTime timestamp) {
-        String idColumnName = kpiSubject.equals(KpiSubject.SURGERY) ? COL_SURGERY_ID : COL_OR_ID;
-        String tableName = kpiSubject.equals(KpiSubject.SURGERY) ? this.configuration.getDbSurgeryName() : this.configuration.getDbDepartmentName();
+    public boolean addOperatingRoomKpiRecord(String id, String type, float value, LocalDateTime timestamp) {
+        String idColumnName = COL_OR_ID;
+        String tableName = this.configuration.getDbDepartmentName();
 
         String insertSQL = "INSERT INTO " + tableName + " (" +
                 COL_KPI_TYPE + ", " + idColumnName + ", " +
@@ -122,6 +123,35 @@ public class KpiDataSourceGatewayImpl implements KpiDataSourceGateway {
             pstmt.setString(2, id);
             pstmt.setFloat(3, value);
             pstmt.setTimestamp(4, Timestamp.valueOf(timestamp));
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                logger.info("Data inserted for: " + id);
+                return true;
+            } else {
+                logger.info("Failed to insert data for: " + id + " (might be duplicate ID)");
+                return false;
+            }
+        } catch (SQLException e) {
+            logger.error(e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean addSurgeryKpiRecord(String id, String type, String surgeryType, float value, LocalDateTime timestamp) {
+        String idColumnName = COL_SURGERY_ID;
+        String tableName = this.configuration.getDbSurgeryName();
+
+        String insertSQL = "INSERT INTO " + tableName + " (" +
+                COL_KPI_TYPE + ", " + idColumnName + ", " + COL_SURGERY_TYPE + ", " +
+                COL_VALUE + ", " + COL_TIMESTAMP + ") VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = this.conn.prepareStatement(insertSQL)) {
+            pstmt.setString(1, type);
+            pstmt.setString(2, id);
+            pstmt.setString(3, surgeryType);
+            pstmt.setFloat(4, value);
+            pstmt.setTimestamp(5, Timestamp.valueOf(timestamp));
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {

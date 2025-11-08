@@ -39,10 +39,10 @@ public class KpiRepositorylDigitalAdapter extends DigitalAdapter<KpiDataSourceGa
         KpiDigitalNotification surgeryKpiNotification = (KpiDigitalNotification) digitalTwinStateEventNotification.getBody();
         switch (eventKey) {
             case SURGERY_KPI_UPDATE -> {
-                this.getConfiguration().addKpiRecord(KpiSubject.SURGERY, surgeryKpiNotification.id(), surgeryKpiNotification.type(), surgeryKpiNotification.value(), surgeryKpiNotification.timestamp());
+                this.getConfiguration().addSurgeryKpiRecord(surgeryKpiNotification.id(), surgeryKpiNotification.type(), surgeryKpiNotification.desc(), surgeryKpiNotification.value(), surgeryKpiNotification.timestamp());
             }
             case OPERATING_ROOM_KPI_UPDATE -> {
-                this.getConfiguration().addKpiRecord(KpiSubject.OPERATING_ROOM, surgeryKpiNotification.id(), surgeryKpiNotification.type(), surgeryKpiNotification.value(), surgeryKpiNotification.timestamp());
+                this.getConfiguration().addOperatingRoomKpiRecord(surgeryKpiNotification.id(), surgeryKpiNotification.type(), surgeryKpiNotification.value(), surgeryKpiNotification.timestamp());
             }
             case M22_UPDATE -> {
                 this.getConfiguration().addM22Kpi(surgeryKpiNotification.value(), surgeryKpiNotification.timestamp().toLocalDate());

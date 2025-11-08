@@ -1,3 +1,3 @@
 package org.example.businessLayer.adapter;
 
-public record SurgeryKpiNotification(String surgeryId, float value){}
+public record SurgeryKpiNotification(String surgeryId, float value, String typeOfSurgery){}

@@ -1,4 +1,4 @@
-package org.example.infrastructureLayer.repositoryMySql;
+package org.example.infrastructureLayer.persistence;
 
 import org.example.domain.model.PriorityClass;
 import org.example.domain.model.Surgery;
@@ -37,26 +37,71 @@ public class SurgeryDataAccess {
             emptyTable(conn);
 
             // 4. Insert some sample data
+//            insertSimulationData(
+//                    conn,
+//                    1,
+//                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,0)),
+//                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,1,0)),
+//                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,40)),
+//                    0,
+//                    120,
+//                    "patient_1",
+//                    "surgery_1");
+
             insertSimulationData(
                     conn,
                     1,
-                    LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,0,0)),
-                    LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,1,0)),
-                    LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,0,40)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,10)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,30,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,10,0)),
                     0,
-                    120,
+                    60,
                     "patient_1",
                     "surgery_1");
+
             insertSimulationData(
                     conn,
                     2,
-                    LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,0,10)),
-                    LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,1,0)),
-                    LocalDateTime.of(LocalDate.of(2025, 2, 28), LocalTime.of(9,0,20)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(10,30,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(11,0,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(10,50,0)),
                     0,
-                    120,
+                    45,
                     "patient_2",
-                    "surgery_1");
+                    "surgery_2");
+
+            insertSimulationData(
+                    conn,
+                    3,
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(13,30,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(14,15,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(14,0,0)),
+                    0,
+                    45,
+                    "patient_3",
+                    "surgery_3");
+
+            insertSimulationData(
+                    conn,
+                    4,
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of( 15,0,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(15,30,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(15,20,0)),
+                    0,
+                    50,
+                    "patient_4",
+                    "surgery_4");
+
+            insertSimulationData(
+                    conn,
+                    5,
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of( 16,0,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(16,30,0)),
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(16,10,0)),
+                    0,
+                    30,
+                    "patient_5",
+                    "surgery_5");
 
             // 5. Retrieve and display data
             System.out.println("\nRetrieving simulation data:");
