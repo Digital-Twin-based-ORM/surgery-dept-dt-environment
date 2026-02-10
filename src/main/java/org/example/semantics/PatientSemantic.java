@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.example.utils.GlobalValues.LOCATED_IN_RELATIONSHIP_NAME;
-import static org.example.utils.GlobalValues.SURGERY_RELATIONSHIP_NAME;
+import static org.example.utils.GlobalValues.*;
+import static org.example.utils.GlobalValues.EXECUTED_IN_RELATIONSHIP_NAME;
 
 public class PatientSemantic extends AbstractSemantic {
 
@@ -25,7 +25,10 @@ public class PatientSemantic extends AbstractSemantic {
             "birthDate", new RdfUriResource(URI.create("http://www.hl7.org/fhir/date"))
     );
 
-    private static final Map<String, RdfUriResource> RELATIONSHIPS_DOMAIN_TAG = Map.of();
+    private static final Map<String, RdfUriResource> RELATIONSHIPS_DOMAIN_TAG = Map.of(
+            SURGERY_RELATIONSHIP_NAME, new RdfUriResource(URI.create("")),
+            LOCATED_IN_RELATIONSHIP_NAME, new RdfUriResource(URI.create(""))
+    );
 
     private static final Map<String, RdfUriResource> ACTIONS_DOMAIN_TAG = Map.of(
             "addSurgery", new RdfUriResource(URI.create("https://purl.org/mao/onto/AddSurgery"))
@@ -33,7 +36,7 @@ public class PatientSemantic extends AbstractSemantic {
 
     @Override
     public List<RdfClass> getDigitalTwinTypes() {
-        return List.of(new RdfClass(URI.create("https://www.hl7.org/fhir/Patient")));
+        return List.of(new RdfClass(URI.create("http://www.hl7.org/fhir/Patient")));
     }
 
     @Override
@@ -53,6 +56,7 @@ public class PatientSemantic extends AbstractSemantic {
 
     @Override
     public Optional<List<RdfUnSubjectedTriple>> mapData(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+        System.out.println("PATIENT SEMANTIC _ LOADING.....");
         switch (digitalTwinStateProperty.getKey()) {
             case "name":
                 return Optional.of(List.of(
@@ -90,33 +94,43 @@ public class PatientSemantic extends AbstractSemantic {
                         )
                 ));
                 ////////////////////////////////
-            case "birthDate":
-                return Optional.of(List.of(
-                        new RdfUnSubjectedTriple(
-                                new RdfProperty(URI.create("http://www.hl7.org/fhir/birthDate")),
-                                new RdfLiteral<>(((LocalDate)digitalTwinStateProperty.getValue()).format(DateTimeFormatter.ISO_LOCAL_DATE))
-                        )
-                ));
-                ////////////////////////////////
             case "identifier":
                 return Optional.of(List.of(
                         new RdfUnSubjectedTriple(
                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/identifier")),
-                                new RdfBlankNode("patient-identifier-value", List.of(
+                                new RdfBlankNode("patient-identifier-object", List.of(
                                         new RdfUnSubjectedTriple(
                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/value")),
-                                                new RdfBlankNode("identifier-value", List.of(
+                                                new RdfBlankNode("patient-identifier-surname-value", List.of(
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
-                                                                new RdfLiteral<>(digitalTwinStateProperty.getValue().toString())
+                                                                new RdfLiteral<>(((String)digitalTwinStateProperty.getValue()))
                                                         )
                                                 ))
                                         )
                                 ))
                         )
                 ));
+                ////////////////////////////////
+            case "birthDate":
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create("http://www.hl7.org/fhir/birthDate")),
+                                new RdfLiteral<>(digitalTwinStateProperty.getValue())
+                        )
+                ));
             default:
-                return Optional.empty();
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create(digitalTwinStateProperty.getKey())),
+                                new RdfBlankNode("value", List.of(
+                                        new RdfUnSubjectedTriple(
+                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/value")),
+                                                new RdfLiteral<>(digitalTwinStateProperty.getValue().toString())
+                                        )
+                                ))
+                        )
+                ));
         }
     }
 

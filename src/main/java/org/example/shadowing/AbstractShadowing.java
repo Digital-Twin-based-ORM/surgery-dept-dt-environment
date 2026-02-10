@@ -134,15 +134,16 @@ public abstract class AbstractShadowing extends ShadowingFunction {
                     try{
                         if(relationship != null){
 
-                            DigitalTwinStateRelationship<String> insideInDtStateRelationship = new DigitalTwinStateRelationship<>(relationship.getName(), relationship.getType());
+                            DigitalTwinStateRelationship<String> relationshipDT = new DigitalTwinStateRelationship<>(relationship.getName(), relationship.getName());
 
-                            this.digitalTwinStateManager.createRelationship(insideInDtStateRelationship);
+                            this.digitalTwinStateManager.createRelationship(relationshipDT);
 
                             observePhysicalAssetRelationship(relationship);
 
                             System.out.println("[TestShadowingFunction] -> onDigitalTwinBound() -> Relationship Created & Observed :" + relationship.getName());
                         }
                     }catch (Exception e){
+                        System.out.println("ERRORE ASTRACT SADOWING: " + e.getMessage());
                         e.printStackTrace();
                     }
                 });

@@ -52,6 +52,7 @@ public class MedicalDeviceSemantic extends AbstractSemantic implements DigitalTw
 
     @Override
     public Optional<List<RdfUnSubjectedTriple>> mapData(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+        System.out.println("VSM SEMANTIC _ LOADING.....");
         switch (digitalTwinStateProperty.getKey()) {
 
             case HEART_RATE:
@@ -64,7 +65,7 @@ public class MedicalDeviceSemantic extends AbstractSemantic implements DigitalTw
                                                 new RdfBlankNode("device-type-coding", List.of(
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")),
-                                                                new RdfUriResource(URI.create(SNOMED_URI_PREFIX + ((CodeableConcept) digitalTwinStateProperty.getValue()).getCode()))
+                                                                new RdfUriResource(URI.create(SNOMED_URI_PREFIX + HEART_RATE_SCTID))
                                                         ),
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/system")),
@@ -120,7 +121,17 @@ public class MedicalDeviceSemantic extends AbstractSemantic implements DigitalTw
                 );
 
             default:
-                return Optional.empty();
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create(digitalTwinStateProperty.getKey())),
+                                new RdfBlankNode("value", List.of(
+                                        new RdfUnSubjectedTriple(
+                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/value")),
+                                                new RdfLiteral<>(digitalTwinStateProperty.getValue().toString())
+                                        )
+                                ))
+                        )
+                ));
         }
     }
 

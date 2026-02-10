@@ -6,6 +6,7 @@ import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfigurationBuilder;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.example.businessLayer.adapter.KpiDigitalRecord;
 import org.example.businessLayer.adapter.OperatingRoomDailySlot;
 import org.example.businessLayer.adapter.SurgeryKpiNotification;
 import org.example.domain.model.*;
@@ -13,6 +14,8 @@ import org.example.domain.model.fhir.LocationType;
 import org.example.utils.UtilsFunctions;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static org.example.utils.GlobalValues.*;
@@ -87,12 +90,14 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
             try {
                 String id = getJsonField(content, "idSurgery");
                 LocalDateTime admissionDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "admissionDate")));
+                LocalDateTime arrivalDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "arrivalDate")));
                 LocalDateTime programmedDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "programmedDate")));
+                LocalDateTime waitingListInsertionDate = LocalDateTime.parse(Objects.requireNonNull(getJsonField(content, "waitingListInsertionDate")));
                 String priority = getJsonField(content, "priority");
                 HospitalizationRegime hospitalizationRegime = HospitalizationRegime.valueOf(getJsonField(content, "hospitalizationRegime"));
                 Integer estimatedTime = UtilsFunctions.getJsonIntField(content, "estimatedTime");
                 assert estimatedTime != null;
-                return new Surgery(id, programmedDate, admissionDate, PriorityClass.valueOf(priority), hospitalizationRegime, estimatedTime);
+                return new Surgery(id, arrivalDate, programmedDate, admissionDate, PriorityClass.valueOf(priority), hospitalizationRegime, estimatedTime, waitingListInsertionDate);
             } catch (Exception e) {
                 System.out.println("ERRORE DEPARTMENT: " + e.getMessage());
                 return null;
@@ -126,6 +131,9 @@ public class MqttSurgeryDepPhysicalAdapter extends AbstractMqttPhysicalAdapter {
         this.addStringEvent(WORKING_DAY_STARTED);
         this.addStringEvent(WORKING_DAY_TERMINATED);
         this.addStringEvent(SURGERY_CANCELLED);
+
+        // TODO only for test -> REMOVE
+        this.builder.addPhysicalAssetActionAndTopic("action", "type", "text/plain", "action", i -> "");
     }
 
     public void addSurgeryKpiEventTopic(String kpi) throws MqttPhysicalAdapterConfigurationException {

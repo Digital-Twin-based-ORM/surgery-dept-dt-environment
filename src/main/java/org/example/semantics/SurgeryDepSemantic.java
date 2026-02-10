@@ -18,6 +18,8 @@ import static org.example.physicalAdapter.MqttSurgeryDepPhysicalAdapter.DEPARTME
 import static org.example.physicalAdapter.MqttSurgeryDepPhysicalAdapter.LOCATION_TYPE;
 import static org.example.semantics.CodeSystems.SNOMED_CT;
 import static org.example.semantics.CodeSystems.SNOMED_URI_PREFIX;
+import static org.example.utils.GlobalValues.OPERATING_ROOMS_NAME;
+import static org.example.utils.GlobalValues.SUPERVISE_SURGERY_NAME;
 
 public class SurgeryDepSemantic extends AbstractSemantic implements DigitalTwinSemantics {
     public static final String SURGICAL_DEPARTMENT_SCTID = "309967005";
@@ -26,7 +28,8 @@ public class SurgeryDepSemantic extends AbstractSemantic implements DigitalTwinS
             LOCATION_TYPE, new RdfUriResource(URI.create("http://hl7.org/fhir/type"))
     );
     private static final Map<String, RdfUriResource> RELATIONSHIPS_DOMAIN_TAG = Map.of(
-
+            SUPERVISE_SURGERY_NAME,new RdfUriResource(URI.create("http://hl7.org/fhir/v")),
+            OPERATING_ROOMS_NAME, new RdfUriResource(URI.create("http://hl7.org/fhir/v"))
     );
     private static final Map<String, RdfUriResource> ACTIONS_DOMAIN_TAG = Map.of();
 
@@ -37,7 +40,9 @@ public class SurgeryDepSemantic extends AbstractSemantic implements DigitalTwinS
 
     @Override
     public List<RdfClass> getDigitalTwinTypes() {
-        return List.of(new RdfClass(URI.create("http://hl7.org/fhir/Location")));
+        return List.of(
+                new RdfClass(URI.create("http://hl7.org/fhir/Location"))
+            );
     }
 
     @Override
@@ -57,6 +62,7 @@ public class SurgeryDepSemantic extends AbstractSemantic implements DigitalTwinS
 
     @Override
     public Optional<List<RdfUnSubjectedTriple>> mapData(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+        System.out.println("DEP SEMANTIC _ LOADING.....");
         switch (digitalTwinStateProperty.getKey()) {
             case DEPARTMENT_NAME:
                 return Optional.of(List.of(
@@ -81,7 +87,7 @@ public class SurgeryDepSemantic extends AbstractSemantic implements DigitalTwinS
                                                 new RdfBlankNode("location-type-coding", List.of(
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")),
-                                                                new RdfUriResource(URI.create(SNOMED_URI_PREFIX + ((CodeableConcept) digitalTwinStateProperty.getValue()).getCode()))
+                                                                new RdfUriResource(URI.create(SNOMED_URI_PREFIX + SURGICAL_DEPARTMENT_SCTID))
                                                         ),
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/system")),
@@ -125,7 +131,7 @@ public class SurgeryDepSemantic extends AbstractSemantic implements DigitalTwinS
                 ));
 
             default:
-                return Optional.empty();
+                return Optional.of(List.of());
         }
     }
 }

@@ -2,6 +2,13 @@ package org.example.utils;
 
 public class GlobalValues {
 
+    public static final String WODT_DT_BASE_LOCALHOST = "localhost";
+    public static final String WODT_DT_BASE_DOCKER_HOST = "host.docker.internal";
+    public static final String WODT_DT_BASE_HOST = WODT_DT_BASE_DOCKER_HOST;
+
+    /* COMMON PROPERTIES KEYS */
+    public final static String IDENTIFIER_KEY = "identifier";
+
     /* COMMON PARAMETERS */
     public final static String TYPE = "typeOfDt";
     public final static String PATIENT_TYPE = "patient";
@@ -9,6 +16,7 @@ public class GlobalValues {
     public final static String OPERATING_ROOM_TYPE = "operatingRoom";
     public final static String DEPARTMENT_TYPE = "department";
     public final static String VSM_TYPE = "vsm";
+    public static final String REGISTER_PLATFORM = "http://localhost:8000";
     /* PATIENT */
     public static final String SURGERY_RELATIONSHIP_NAME = "surgery";
     public static final String SURGERY_RELATIONSHIP_TYPE = "surgery_rel";

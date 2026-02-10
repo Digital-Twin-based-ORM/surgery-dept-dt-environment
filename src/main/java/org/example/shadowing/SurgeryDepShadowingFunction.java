@@ -1,7 +1,9 @@
 package org.example.shadowing;
 
 import it.wldt.adapter.digital.event.DigitalActionWldtEvent;
+import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import it.wldt.adapter.physical.PhysicalAssetDescription;
+import it.wldt.adapter.physical.PhysicalAssetProperty;
 import it.wldt.adapter.physical.PhysicalAssetRelationship;
 import it.wldt.adapter.physical.PhysicalAssetRelationshipInstance;
 import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
@@ -14,13 +16,14 @@ import it.wldt.core.state.DigitalTwinStateRelationship;
 import it.wldt.core.state.DigitalTwinStateRelationshipInstance;
 import it.wldt.exception.WldtDigitalTwinStateEventNotificationException;
 import it.wldt.exception.WldtDigitalTwinStateException;
-import org.example.businessLayer.adapter.KpiDigitalNotification;
+import it.wldt.exception.WldtDigitalTwinStatePropertyException;
+import org.example.businessLayer.adapter.KpiDigitalRecord;
+import org.example.businessLayer.adapter.KpiPropertyRecord;
 import org.example.businessLayer.adapter.OperatingRoomDailySlot;
 import org.example.businessLayer.adapter.SurgeryKpiNotification;
 import org.example.domain.model.*;
 import org.example.utils.KpiCalculator;
 import org.example.utils.Pair;
-import org.example.utils.UtilsFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +49,7 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
 
     public SurgeryDepShadowingFunction(String id, List<String> idOperatingRooms) {
         super(id);
+        // TODO popolare la lista idOperatingRooms in base alle relationships
         this.idOperatingRooms = idOperatingRooms;
     }
 
@@ -76,6 +80,11 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
         this.operatingRoomsRelationship = new PhysicalAssetRelationship<>(OPERATING_ROOMS_NAME, OPERATING_ROOMS_TYPE);
         relationshipsPad.getRelationships().add(this.surgerySupervisedRelationship);
         relationshipsPad.getRelationships().add(this.operatingRoomsRelationship);
+
+        List<String> kpiNames = List.of(M1, M2, M3, M9, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19, M20, M21, M22, M23, M24, M26, M29);
+        kpiNames.forEach(i -> {
+            relationshipsPad.getProperties().add(new PhysicalAssetProperty<List<KpiPropertyRecord>>("KPI_" + i, List.of()));
+        });
         adaptersPhysicalAssetDescriptionMap.put("relationshipsPad", relationshipsPad);
         super.onDigitalTwinBound(adaptersPhysicalAssetDescriptionMap);
     }
@@ -189,10 +198,7 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
                         logger.info("SURGERY IS CANCELLED");
                         String surgeryId = (String) physicalAssetEventWldtEvent.getBody();
                         Optional<Surgery> surgeryOpt = this.surgeries.stream().filter(i -> i.getIdSurgery().equals(surgeryId)).findFirst();
-                        if(surgeryOpt.isPresent()) {
-                            Surgery surgery = surgeryOpt.get();
-                            surgery.cancelSurgery();
-                        }
+                        surgeryOpt.ifPresent(Surgery::cancelSurgery);
                         Optional<Surgery> surgeryOpt1 = this.surgeries.stream().filter(i -> i.getIdSurgery().equals(surgeryId)).findFirst();
                         surgeryOpt1.ifPresent(surgery -> logger.info("SURGERY INFO: " + surgery.isCancelled()));
                     }
@@ -221,6 +227,15 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
                             float m10 = calculator.M10(idOR);
                             notifyOperatingRoomKpi(idOR, m10, M10, physicalAssetEventWldtEvent.getCreationTimestamp());
                             logger.info("M10: " + m10);
+                            float m11 = calculator.M11(idOR);
+                            notifyOperatingRoomKpi(idOR, m11, M11, physicalAssetEventWldtEvent.getCreationTimestamp());
+                            logger.info("M11: " + m11);
+                            float m12 = calculator.M12(idOR);
+                            notifyOperatingRoomKpi(idOR, m12, M12, physicalAssetEventWldtEvent.getCreationTimestamp());
+                            logger.info("M12: " + m12);
+                            float m13 = calculator.M13(idOR);
+                            notifyOperatingRoomKpi(idOR, m13, M13, physicalAssetEventWldtEvent.getCreationTimestamp());
+                            logger.info("M13: " + m13);
                             float m16 = calculator.M16(idOR);
                             notifyOperatingRoomKpi(idOR, m16, M16, physicalAssetEventWldtEvent.getCreationTimestamp());
                             logger.info("M16: " + m16);
@@ -261,27 +276,38 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
 
     @Override
     protected void onDigitalActionEvent(DigitalActionWldtEvent<?> digitalActionWldtEvent) {
-
+        // TODO only for test -> REMOVE
+        logger.info("trying adding KPI property");
+        try {
+            this.addKpiProperty(new KpiDigitalRecord("id", "KPI_m9", "desc", 1.0f, LocalDateTime.now()));
+        } catch (WldtDigitalTwinStatePropertyException | WldtDigitalTwinStateException e) {
+            logger.error("Error while adding KPI property", e);
+        }
     }
 
-    private void notifyOperatingRoomKpi(String orId, float value, String type, long creationTimestamp) throws WldtDigitalTwinStateEventNotificationException {
+    private void notifyOperatingRoomKpi(String orId, float value, String type, long creationTimestamp) throws WldtDigitalTwinStateEventNotificationException, WldtDigitalTwinStatePropertyException, WldtDigitalTwinStateException {
+        KpiDigitalRecord kpiDigitalRecord = new KpiDigitalRecord(orId, type, "", value, LocalDateTime.now());
         this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(
                 OPERATING_ROOM_KPI_UPDATE,
-                new KpiDigitalNotification(orId, type, "", value, LocalDateTime.now()),
+                kpiDigitalRecord,
                 creationTimestamp
         ));
+        this.addKpiProperty(kpiDigitalRecord);
     }
 
-    private void notifySurgeryKpi(SurgeryKpiNotification body, String type, long creationTimestamp) throws WldtDigitalTwinStateEventNotificationException {
+    private void notifySurgeryKpi(SurgeryKpiNotification body, String type, long creationTimestamp) throws WldtDigitalTwinStateEventNotificationException, WldtDigitalTwinStatePropertyException, WldtDigitalTwinStateException {
         logger.info("NOTIFYING NEW SURGERY KPI...");
+        KpiDigitalRecord kpiRecord = new KpiDigitalRecord(body.surgeryId(), type, body.typeOfSurgery(), body.value(), LocalDateTime.now());
         this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(
                 SURGERY_KPI_UPDATE,
-                new KpiDigitalNotification(body.surgeryId(), type, body.typeOfSurgery(), body.value(), LocalDateTime.now()),
+                kpiRecord,
                 creationTimestamp
         ));
+        this.addKpiProperty(kpiRecord);
     }
 
     private void initializeKpiList() {
+        //TODO remove?!
         this.floatKpi = new HashMap<>();
         List<String> kpi = List.of(M1, M2, M3, M9, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19, M20, M21, M22, M23, M24, M26, M29);
         kpi.forEach(i -> {
@@ -304,6 +330,7 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
         this.dailySlots = new HashMap<>();
         if(this.digitalTwinStateManager.getDigitalTwinState().getRelationshipList().isPresent()) {
             Optional<DigitalTwinStateRelationship<?>> relationship = this.digitalTwinStateManager.getDigitalTwinState().getRelationshipList().get().stream().filter(i -> i.getName().equals(OPERATING_ROOMS_NAME)).findFirst();
+            //TODO what the hell is that?!
             if(relationship.isPresent()) {
                 List<String> instancesKey = relationship.get().getInstances().stream().map(DigitalTwinStateRelationshipInstance::getKey).toList();
                 for(String key : instancesKey) {
@@ -314,6 +341,22 @@ public class SurgeryDepShadowingFunction extends AbstractShadowing {
             }
         }
     }
+
+    private void addKpiProperty(KpiDigitalRecord kpiDigitalRecord) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStateException {
+        String kpiListKey = "KPI_" + kpiDigitalRecord.type();
+        Optional<DigitalTwinStateProperty<?>> listOpt = this.digitalTwinStateManager.getDigitalTwinState().getProperty(kpiListKey);
+        if(listOpt.isPresent()) {
+            DigitalTwinStateProperty<?> property = listOpt.get();
+            List<?> list = (List<?>) property.getValue();
+            KpiPropertyRecord record = new KpiPropertyRecord(kpiDigitalRecord.id(), kpiDigitalRecord.type(), kpiDigitalRecord.value(), kpiDigitalRecord.timestamp().toString());
+            List<KpiPropertyRecord> kpiList = list.stream().map(i -> (KpiPropertyRecord)i).collect(Collectors.toList());
+            kpiList.add(record);
+            this.updateProperty(kpiListKey, kpiList);
+        } else {
+            this.updateProperty(kpiListKey, List.of(kpiDigitalRecord));
+        }
+    }
+
 
     private void updateKpiOnSurgery(String surgeryId, String kpi, Float value) {
         // change the surgery and put the new kpi

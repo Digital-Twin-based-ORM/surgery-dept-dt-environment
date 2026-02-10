@@ -21,7 +21,7 @@ public class SurgeryMqttDigitalAdapter {
     MqttDigitalAdapterConfigurationBuilder builder;
 
     public SurgeryMqttDigitalAdapter(String host, Integer port, String idDepDT) throws MqttDigitalAdapterConfigurationException {
-        builder = MqttDigitalAdapterConfiguration.builder(host, port);
+        builder = MqttDigitalAdapterConfiguration.builder(host, port).setAutomaticReconnectFlag(true).setConnectionTimeout(10000);
         String baseTopic = "anylogic/id/dep/" + idDepDT + "/";
 
         builder.addEventNotificationTopic(SURGERY_CREATED_NOTIFICATION, baseTopic + SURGERY_CREATED, MqttQosLevel.MQTT_QOS_0, this::convertSurgeryToJson);
@@ -38,11 +38,13 @@ public class SurgeryMqttDigitalAdapter {
     private String convertSurgeryToJson(Surgery surgery) {
         JsonObject obj = new JsonObject();
         obj.addProperty("idSurgery", surgery.getIdSurgery());
+        obj.addProperty("arrivalDate", surgery.getArrivalDate().toString());
         obj.addProperty("admissionDate", surgery.getAdmissionDate().toString());
         obj.addProperty("programmedDate", surgery.getProgrammedDate().toString());
         obj.addProperty("priority", surgery.getPriority().toString());
         obj.addProperty("hospitalizationRegime", surgery.getHospitalizationRegime().toString());
         obj.addProperty("estimatedTime", surgery.getEstimatedTime());
+        obj.addProperty("waitingListInsertionDate", surgery.getWaitingListInsertionDate().toString());
         return obj.toString();
     }
 

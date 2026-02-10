@@ -5,9 +5,7 @@ import it.wldt.core.state.DigitalTwinState;
 import it.wldt.core.state.DigitalTwinStateChange;
 import it.wldt.core.state.DigitalTwinStateEventNotification;
 import it.wldt.exception.EventBusException;
-import it.wldt.exception.StorageException;
-import org.example.businessLayer.adapter.KpiDigitalNotification;
-import org.example.businessLayer.adapter.KpiSubject;
+import org.example.businessLayer.adapter.KpiDigitalRecord;
 import org.example.businessLayer.boundaries.KpiDataSourceGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +34,7 @@ public class KpiRepositorylDigitalAdapter extends DigitalAdapter<KpiDataSourceGa
     protected void onEventNotificationReceived(DigitalTwinStateEventNotification<?> digitalTwinStateEventNotification) {
         String eventKey = digitalTwinStateEventNotification.getDigitalEventKey();
         this.logger.info("[MySqlDigitalAdapter] -> onEventNotificationReceived(): " + eventKey);
-        KpiDigitalNotification surgeryKpiNotification = (KpiDigitalNotification) digitalTwinStateEventNotification.getBody();
+        KpiDigitalRecord surgeryKpiNotification = (KpiDigitalRecord) digitalTwinStateEventNotification.getBody();
         switch (eventKey) {
             case SURGERY_KPI_UPDATE -> {
                 this.getConfiguration().addSurgeryKpiRecord(surgeryKpiNotification.id(), surgeryKpiNotification.type(), surgeryKpiNotification.desc(), surgeryKpiNotification.value(), surgeryKpiNotification.timestamp());

@@ -15,6 +15,7 @@ import it.wldt.exception.WldtDigitalTwinStateEventNotificationException;
 import it.wldt.exception.WldtDigitalTwinStateException;
 import org.example.digitalAdapter.mqtt.MqttPatientDigitalAdapter;
 import org.example.domain.model.HealthInformation;
+import org.example.domain.model.SurgeryMetadata;
 import org.example.dt.property.PatientProperties;
 import org.example.physicalAdapter.MqttPatientPhysicalAdapterBuilder;
 import org.example.utils.UtilsFunctions;
@@ -120,6 +121,7 @@ public class PatientShadowingFunction extends AbstractShadowing {
                     this.digitalTwinStateManager.commitStateTransaction();
                     this.lastCurrentlyLocatedRelationshipInstanceKey = relInstance.getKey();
                 } catch (WldtDigitalTwinStateException e) {
+                    logger.error("ERROOOOR: " + e.getMessage());
                     throw new RuntimeException(e);
                 }
             }
@@ -131,15 +133,17 @@ public class PatientShadowingFunction extends AbstractShadowing {
         if(Objects.equals(physicalAssetEventWldtEvent.getPhysicalEventKey(), MqttPatientPhysicalAdapterBuilder.SURGERY_REQUEST)) {
             try {
                 this.digitalTwinStateManager.startStateTransaction();
-                String surgeryUri = (String)physicalAssetEventWldtEvent.getBody();
-                // TODO add surgery date
+                SurgeryMetadata surgery = (SurgeryMetadata)physicalAssetEventWldtEvent.getBody();
+                System.out.println("Content: " + surgery.id());
                 Map<String, Object> relationshipMetadata = new HashMap<>();
-                relationshipMetadata.put("surgery_date", "f0");
+                relationshipMetadata.put("uri", surgery.uri());
+                relationshipMetadata.put("id", surgery.id());
 
-                PhysicalAssetRelationshipInstance<String> relInstance = this.subjectedToRelationship.createRelationshipInstance(surgeryUri, relationshipMetadata);
-                this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(relInstance.getRelationship().getName(), relInstance.getTargetId(), relInstance.getKey()));
+                PhysicalAssetRelationshipInstance<String> relInstance = this.subjectedToRelationship.createRelationshipInstance(surgery.id());
+                this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(relInstance.getRelationship().getName(), relInstance.getTargetId(), relInstance.getKey(), relationshipMetadata));
                 this.digitalTwinStateManager.commitStateTransaction();
             } catch (WldtDigitalTwinStateException e) {
+                logger.error("ERROR PATIENT: " + e.getMessage());
                 throw new RuntimeException(e);
             }
         }

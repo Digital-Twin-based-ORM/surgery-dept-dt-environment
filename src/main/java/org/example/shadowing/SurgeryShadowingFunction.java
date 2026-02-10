@@ -175,6 +175,7 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                                 .toInstant()
                                 .toEpochMilli();
                         this.updateKPI(eventTimeStampMillis);
+                        this.updateProperty(IS_DONE_KEY, true);
                     } catch (Exception e) {
                         logger.error("ERROR surgery: " + e.getMessage());
                     }
@@ -195,8 +196,13 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                     try {
                         this.digitalTwinStateManager.startStateTransaction();
                         String patientUri = (String)physicalAssetEventWldtEvent.getBody();
-
-                        this.digitalTwinStateManager.addRelationshipInstance(new DigitalTwinStateRelationshipInstance<>(PATIENT_OPERATED_RELATIONSHIP_NAME, patientUri, "patient"));
+                        this.digitalTwinStateManager.addRelationshipInstance(
+                                new DigitalTwinStateRelationshipInstance<>(
+                                        PATIENT_OPERATED_RELATIONSHIP_NAME,
+                                        patientUri,
+                                        "patient"
+                                )
+                        );
                         this.digitalTwinStateManager.commitStateTransaction();
                     } catch (WldtDigitalTwinStateException e) {
                         throw new RuntimeException(e);
@@ -304,11 +310,11 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
                     digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M17, new SurgeryKpiNotification(idDT, touchTime, this.properties.getCategory().getDescription()), timestamp));
                     logger.info("Touch time: " + touchTime + " seconds");
                     // M26
-                    long valueAddedTimeDen = Duration.between(inSoDateTime, outSoDateTime).toSeconds();;;
+                    long valueAddedTimeDen = Duration.between(inSoDateTime, outSoDateTime).toSeconds();
                     float valueAddedTime = (float) tChir / valueAddedTimeDen;
                     logger.info("Value added time: " + valueAddedTime);
                     // notify event to digital adapter
-                    // digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M26, new Pair<String, String>(idDT, "" + valueAddedTime), timestamp));
+                    digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(M26, new SurgeryKpiNotification(idDT, valueAddedTime, this.properties.getCategory().getDescription()), timestamp));
                 }
             }
         } catch (Exception e) {
@@ -322,11 +328,13 @@ public class SurgeryShadowingFunction extends AbstractShadowing {
         try {
             digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(SURGERY_CREATED_NOTIFICATION, new Surgery(
                     this.idDT,
+                    properties.getArrivalDate(),
                     properties.getLocalProgrammedDate(),
                     properties.getAdmissionDate(),
                     properties.getPriority(),
                     properties.getRegime(),
-                    properties.getEstimatedTime()
+                    properties.getEstimatedTime(),
+                    properties.getWaitingListInsertionDate()
             ), UtilsFunctions.getCurrentTimestamp()));
         } catch (Exception e) {
             logger.error("Error sending creation notification: " + e.getMessage());

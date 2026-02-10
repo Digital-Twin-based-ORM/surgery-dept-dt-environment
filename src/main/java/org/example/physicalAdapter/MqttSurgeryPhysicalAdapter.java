@@ -33,6 +33,10 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
     public final static String SURGERY_CREATED_NOTIFICATION = "surgeryCreatedNotification";
     public final static String ESTIMATED_TIME_KEY = "estimated_time";
     public final static String IS_CANCELLED = "is_cancelled";
+    public final static String HOSPITALIZATION_REGIME_KEY = "hospitalizationRegime";
+    public final static String WAITING_LIST_INSERTION_KEY = "waitingListInsertionDate";
+    public final static String IS_DONE_KEY = "isDone";
+
     private String baseTopic = "";
     private final MqttPhysicalAdapterConfigurationBuilder builder;
 
@@ -67,6 +71,10 @@ public class MqttSurgeryPhysicalAdapter extends AbstractMqttPhysicalAdapter {
         this.addStringEvent(SURGERY_TERMINATED);
         this.addStringEvent(SURGERY_CREATED_NOTIFICATION);
         this.addStringProperty(TYPE, SURGERY_TYPE);
+
+        this.addStringProperty(HOSPITALIZATION_REGIME_KEY, properties.getRegime().toString());
+        this.addStringProperty(WAITING_LIST_INSERTION_KEY, properties.getWaitingListInsertionDate().toString());
+        this.addBooleanProperty(IS_DONE_KEY, false);
 
         this.addStringProperty(EXECUTION_START_KEY, ""); // redundant (not necessary, only for tracking reason)
         this.addStringProperty(EXECUTION_END_KEY, ""); // redundant (not necessary, only for tracking reason)

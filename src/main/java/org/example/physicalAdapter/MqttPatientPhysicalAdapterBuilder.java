@@ -6,6 +6,7 @@ import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfigurationBuilder;
 import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationException;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.example.domain.model.SurgeryMetadata;
 import org.example.utils.UtilsFunctions;
 
 import static org.example.utils.GlobalValues.PATIENT_TYPE;
@@ -20,7 +21,6 @@ public class MqttPatientPhysicalAdapterBuilder extends AbstractMqttPhysicalAdapt
 
     public MqttPatientPhysicalAdapterBuilder(String host, Integer port, String idDT) throws MqttPhysicalAdapterConfigurationException {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
-        // TODO DT storage
         // Configuring the mqtt physical and http digital adapter
         this.baseTopic = "anylogic/id/Patient/" + idDT;
         this.addStringProperty("currentLocation", "", baseTopic + "/currentLocation");
@@ -28,9 +28,16 @@ public class MqttPatientPhysicalAdapterBuilder extends AbstractMqttPhysicalAdapt
         this.builder.addPhysicalAssetEventAndTopic("bpmAnomaly", "text/plain", baseTopic + "/bpmAnomaly", String::toString);
         this.addStringProperty(TYPE, PATIENT_TYPE);
         this.builder.addPhysicalAssetEventAndTopic(SURGERY_REQUEST, "text/plain", baseTopic + "/" + SURGERY_REQUEST, (String i) ->  {
-            JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(i);
-            assert jsonObject != null;
-            return jsonObject.get("uri").getAsString();
+            try {
+                System.out.println("JSON value: " + i);
+                JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(i);
+                assert jsonObject != null;
+                return new SurgeryMetadata(jsonObject.get("uri").getAsString(), jsonObject.get("id").getAsString());
+            } catch (Exception ex) {
+                System.out.println("EXCEPTIOON: " + ex.getMessage());
+                throw new RuntimeException(ex);
+            }
+
         });
 
     }

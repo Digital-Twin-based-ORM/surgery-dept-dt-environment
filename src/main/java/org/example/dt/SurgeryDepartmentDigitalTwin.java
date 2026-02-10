@@ -1,5 +1,9 @@
 package org.example.dt;
 
+import com.google.gson.JsonObject;
+import io.github.webbasedwodt.adapter.WoDTDigitalAdapter;
+import io.github.webbasedwodt.adapter.WoDTDigitalAdapterConfiguration;
+import io.github.webbasedwodt.model.dtd.DTVersion;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapter;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapterConfiguration;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
@@ -7,22 +11,32 @@ import it.wldt.adapter.mqtt.physical.exception.MqttPhysicalAdapterConfigurationE
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.exception.*;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.example.digitalAdapter.configuration.DigitalRegisterConfiguration;
+import org.example.digitalAdapter.custom.RegisterDigitalAdapter;
 import org.example.digitalAdapter.sql.KpiRepositoryConfiguration;
 import org.example.digitalAdapter.sql.KpiRepositorylDigitalAdapter;
 import org.example.infrastructureLayer.persistence.repository.KpiDataSourceGatewayImpl;
 import org.example.physicalAdapter.MqttSurgeryDepPhysicalAdapter;
+import org.example.semantics.MedicalDeviceSemantic;
+import org.example.semantics.SurgeryDepSemantic;
 import org.example.shadowing.SurgeryDepShadowingFunction;
+import org.example.utils.GlobalValues;
 import org.example.utils.HttpConnectionConfig;
 import org.example.utils.MqttPropertiesConfig;
 
+import java.net.URI;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Set;
+
+import static org.example.utils.GlobalValues.DEPARTMENT_TYPE;
+import static org.example.utils.GlobalValues.REGISTER_PLATFORM;
 
 public class SurgeryDepartmentDigitalTwin {
 
     private final DigitalTwin digitalTwin;
 
-    public SurgeryDepartmentDigitalTwin(String idDT, MqttPropertiesConfig mqttConfig, HttpConnectionConfig connectionConfig, List<String> operatingRoomsId) throws ModelException, WldtRuntimeException, WldtWorkerException, EventBusException, WldtDigitalTwinStateException, WldtConfigurationException, MqttPhysicalAdapterConfigurationException, MqttException, SQLException {
+    public SurgeryDepartmentDigitalTwin(String idDT, MqttPropertiesConfig mqttConfig, HttpConnectionConfig connectionConfig, List<String> operatingRoomsId, int wodtPortNumber) throws ModelException, WldtRuntimeException, WldtWorkerException, EventBusException, WldtDigitalTwinStateException, WldtConfigurationException, MqttPhysicalAdapterConfigurationException, MqttException, SQLException {
         this.digitalTwin = new DigitalTwin(idDT, new SurgeryDepShadowingFunction(idDT, operatingRoomsId));
 
         MqttSurgeryDepPhysicalAdapter builder = new MqttSurgeryDepPhysicalAdapter(idDT, mqttConfig.getHost(), mqttConfig.getPort());
@@ -35,10 +49,26 @@ public class SurgeryDepartmentDigitalTwin {
         KpiRepositoryConfiguration kpiRepositoryConfiguration = new KpiRepositoryConfiguration("dtName", "dtId", "localhost:6033", "user_name", "root_password", "wldt-db", "surgeries_kpi", "prolonged_turnover_time", "operating_rooms_kpi");
         KpiRepositorylDigitalAdapter sqlDigitalAdapter = new KpiRepositorylDigitalAdapter("mysql-digital-adapter", new KpiDataSourceGatewayImpl(kpiRepositoryConfiguration));
 
+        RegisterDigitalAdapter registerDigitalAdapter = new RegisterDigitalAdapter("register-da-" + idDT, new DigitalRegisterConfiguration(REGISTER_PLATFORM, String.valueOf(connectionConfig.getPort()), DEPARTMENT_TYPE, idDT));
+
+        WoDTDigitalAdapter woDTDigitalAdapter = new WoDTDigitalAdapter(
+                idDT,
+                new WoDTDigitalAdapterConfiguration(
+                        URI.create("http://" + GlobalValues.WODT_DT_BASE_HOST + ":" + wodtPortNumber),
+                        new DTVersion(1, 0, 0),
+                        new SurgeryDepSemantic(),
+                        wodtPortNumber,
+                        "department-" + idDT + "-" + connectionConfig.getPort(),
+                        Set.of(URI.create("http://localhost:4000"))
+                )
+        );
+
         // Physical Adapter with Configuration
         digitalTwin.addPhysicalAdapter(mqttPhysicalAdapter);
         digitalTwin.addDigitalAdapter(httpDigitalAdapter);
         digitalTwin.addDigitalAdapter(sqlDigitalAdapter);
+        digitalTwin.addDigitalAdapter(woDTDigitalAdapter);
+        digitalTwin.addDigitalAdapter(registerDigitalAdapter);
     }
 
     public DigitalTwin getDigitalTwin() {

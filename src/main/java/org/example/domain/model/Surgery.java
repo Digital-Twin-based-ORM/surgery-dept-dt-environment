@@ -24,24 +24,16 @@ public class Surgery {
         this.idSurgery = idSurgery;
         this.priority = priority;
     }
-// TODO do with builder? too much constructors?
-    public Surgery(String idSurgery, LocalDateTime arrivalDate, LocalDateTime programmedDate, LocalDateTime admissionDate, LocalDateTime executedDate, PriorityClass priority, int estimatedTime) {
+
+    public Surgery(String idSurgery, LocalDateTime arrivalDate, LocalDateTime programmedDate, LocalDateTime admissionDate, PriorityClass priority, HospitalizationRegime hospitalizationRegime, int estimatedTime, LocalDateTime waitingListInsertionDate) {
         this.idSurgery = idSurgery;
         this.arrivalDate = arrivalDate;
         this.programmedDate = programmedDate;
         this.admissionDate = admissionDate;
         this.priority = priority;
-        this.estimatedTime = estimatedTime;
-    }
-
-    public Surgery(String idSurgery, LocalDateTime programmedDate, LocalDateTime admissionDate, PriorityClass priority, HospitalizationRegime hospitalizationRegime, int estimatedTime) {
-        this.idSurgery = idSurgery;
-        this.arrivalDate = admissionDate.minusMinutes(10);
-        this.programmedDate = programmedDate;
-        this.admissionDate = admissionDate;
-        this.priority = priority;
         this.hospitalizationRegime = hospitalizationRegime;
         this.estimatedTime = estimatedTime;
+        this.waitingListInsertionDate = waitingListInsertionDate;
     }
 
     public void addTimestamp(SurgeryEvents event, String timestamp) {
@@ -105,10 +97,16 @@ public class Surgery {
     public void setRecoveryDate(LocalDateTime recoveryDate) {
         this.recoveryDate = recoveryDate;
     }
+
     public float waitingTime() {
         // M2
         return Duration.between(waitingListInsertionDate, recoveryDate).toDays();
     }
+
+    public LocalDateTime getWaitingListInsertionDate() {
+        return waitingListInsertionDate;
+    }
+
     /**
      * Only if the patient has not been recovered yet.
      * @return the days passed from the insertion in waiting list and compared to the maximum time wait of its priority class.

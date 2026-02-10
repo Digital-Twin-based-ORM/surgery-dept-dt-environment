@@ -127,9 +127,35 @@ public class KpiCalculatorScenery1Test {
     }
 
     @Test
+    void testM22() {
+        Surgery surgery1 = new Surgery("6", PriorityClass.A);
+        Surgery surgery2 = new Surgery("7", PriorityClass.A);
+        surgery1.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("09:30:00")).toString());
+        surgery1.setProgrammedDate(LocalDateTime.of(LocalDate.now(), LocalTime.parse("09:00:00")));
+        surgery2.addTimestamp(SurgeryEvents.InSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("10:35:00")).toString());
+        surgery2.setProgrammedDate(LocalDateTime.of(LocalDate.now(), LocalTime.parse("10:35:00")));
+
+        Surgery surgery3 = new Surgery("8", PriorityClass.A);
+        Surgery surgery4 = new Surgery("9", PriorityClass.A);
+        surgery3.addTimestamp(SurgeryEvents.OutSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("14:30:00")).toString());
+        surgery3.setProgrammedDate(LocalDateTime.of(LocalDate.now(), LocalTime.parse("14:10:00")));
+        surgery4.addTimestamp(SurgeryEvents.InSO, LocalDateTime.of(LocalDate.now(), LocalTime.parse("15:46:00")).toString());
+        surgery4.setProgrammedDate(LocalDateTime.of(LocalDate.now(), LocalTime.parse("15:00:00")));
+        ArrayList<Surgery> allSurgeries1 = new ArrayList<>(List.of(surgery1, surgery2, surgery3, surgery4));
+        ArrayList<SurgeryLocation> surgeriesExecuted1 = new ArrayList<>(List.of(
+                new SurgeryLocation("6", "1"),
+                new SurgeryLocation("7", "1"),
+                new SurgeryLocation("8", "1"),
+                new SurgeryLocation("9", "1")
+        ));
+        KpiCalculator kpiCalculator1 = new KpiCalculator(allSurgeries1, surgeriesExecuted1, orSlots);
+        Assertions.assertEquals(1, kpiCalculator1.M22());
+    }
+
+    @Test
     void testM13() {
         float value = kpiCalculator.M13("1");
-        Assertions.assertEquals(70, value);
+        Assertions.assertEquals(25, value);
     }
 
     @Test

@@ -91,26 +91,29 @@ public class KpiCalculator {
      * @return
      */
     public float M13(String idOperatingRoom) {
-        // TODO Total turn over time for a specified operating room??
-        float totalTime = 0;
-        float totalSurgeries = 0;
+        // TODO check that works
         List<String> surgeriesExecutedIds = this.getSurgeriesExecutedIds(idOperatingRoom);
         List<Surgery> surgeriesExecutedToday = allSurgeries.stream().filter(i -> surgeriesExecutedIds.contains(i.getIdSurgery())).toList();
-
+        List<Float> results = new ArrayList<>();
         DailySlot slots = orSlots.get(idOperatingRoom);
         for(SingleSlot slot: slots.getSlots()) {
+            float totalTime = 0;
             List<Surgery> surgeries = getSurgeriesInSlot(surgeriesExecutedToday, slot);
             System.out.println(Arrays.toString(surgeries.toArray()));
-            for(int i = 0; i < surgeries.size() - 1; i ++) {
-                Surgery surgery1 = surgeries.get(i);
-                Surgery surgery2 = surgeries.get(i + 1);
-                float turnOverTime = getTurnOverTime(surgery1, surgery2);
-                totalTime = totalTime + turnOverTime;
+            if(surgeries.size() >= 2) {
+                for(int i = 0; i < surgeries.size() - 1; i ++) {
+                    Surgery surgery1 = surgeries.get(i);
+                    Surgery surgery2 = surgeries.get(i + 1);
+                    float turnOverTime = getTurnOverTime(surgery1, surgery2);
+                    totalTime = totalTime + turnOverTime;
+                }
+                results.add(totalTime / (surgeries.size() - 1));
             }
-            totalSurgeries = totalSurgeries + surgeries.size();
         }
-
-        return totalTime / totalSurgeries;
+        if(results.isEmpty()) {
+            return 0;
+        }
+        return results.stream().reduce(0f, Float::sum) / results.size();
     }
 
     public float M16(String idOperatingRoom) {
@@ -160,7 +163,8 @@ public class KpiCalculator {
             }
         }
         if(totalTurnOverTime == 0) {
-            return -1;
+            // TODO manage error
+            return 0;
         }
         return totalTTProlonged / totalTurnOverTime;
     }

@@ -135,7 +135,7 @@ public class KpiCalculatorScenario2Test {
     @Test
     void testM12() {
         float value = kpiCalculator.M12("1");
-        Assertions.assertEquals(15, value);
+        Assertions.assertEquals(90, value);
     }
 
     @Test

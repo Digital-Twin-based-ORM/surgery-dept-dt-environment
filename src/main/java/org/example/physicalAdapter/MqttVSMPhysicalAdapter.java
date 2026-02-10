@@ -10,7 +10,10 @@ import org.example.domain.model.fhir.DeviceStatus;
 import org.example.domain.model.fhir.SurgeryStatus;
 import org.example.utils.UtilsFunctions;
 
-public class MqttVSMPhysicalAdapter {
+import static org.example.utils.GlobalValues.TYPE;
+import static org.example.utils.GlobalValues.VSM_TYPE;
+
+public class MqttVSMPhysicalAdapter extends AbstractMqttPhysicalAdapter {
 
     public final static String SET_PATIENT = "setPatient";
     public final static String HEART_RATE = "heartRate";
@@ -19,21 +22,24 @@ public class MqttVSMPhysicalAdapter {
     public final static String VSM_PATIENT_ID = "patientId";
 
     MqttPhysicalAdapterConfigurationBuilder builder;
+    String baseTopic;
 
     public MqttVSMPhysicalAdapter(String host, Integer port, String idDT) throws MqttPhysicalAdapterConfigurationException {
         this.builder = MqttPhysicalAdapterConfiguration.builder(host, port);
+        baseTopic = "anylogic/id/VitalSignMonitor/" + idDT + "/";
 
-        builder.addPhysicalAssetPropertyAndTopic(HEART_RATE, 0, "anylogic/id/VitalSignMonitor/" + idDT + "/" + HEART_RATE, Integer::parseInt);
-        builder.addPhysicalAssetPropertyAndTopic(DEVICE_STATUS, DeviceStatus.INACTIVE, "anylogic/id/VitalSignMonitor/" + idDT + "/" + DEVICE_STATUS, i -> {
+        builder.addPhysicalAssetPropertyAndTopic(HEART_RATE, 0, baseTopic + HEART_RATE, Integer::parseInt);
+        builder.addPhysicalAssetPropertyAndTopic(DEVICE_STATUS, DeviceStatus.INACTIVE, baseTopic + DEVICE_STATUS, i -> {
             if(DeviceStatus.isValid(i)) {
                 return DeviceStatus.valueOf(i);
             } else {
                 return DeviceStatus.ENTERED_IN_ERROR;
             }
         });
-        builder.addPhysicalAssetPropertyAndTopic(SERIAL_CODE, 0, "anylogic/id/VitalSignMonitor/" + idDT + "/" + SERIAL_CODE, Integer::parseInt);
-        builder.addPhysicalAssetPropertyAndTopic(VSM_PATIENT_ID, "", "anylogic/id/VitalSignMonitor/" + idDT + "/" + VSM_PATIENT_ID, i -> i);
-        this.builder.addPhysicalAssetEventAndTopic(SET_PATIENT, "text/plain", "anylogic/id/VitalSignMonitor/" + idDT + "/" + SET_PATIENT, (String i) ->  {
+        this.addStringProperty(TYPE, VSM_TYPE);
+        builder.addPhysicalAssetPropertyAndTopic(SERIAL_CODE, 0, baseTopic + SERIAL_CODE, Integer::parseInt);
+        builder.addPhysicalAssetPropertyAndTopic(VSM_PATIENT_ID, "", baseTopic + VSM_PATIENT_ID, i -> i);
+        this.builder.addPhysicalAssetEventAndTopic(SET_PATIENT, "text/plain", baseTopic + SET_PATIENT, (String i) ->  {
             JsonObject jsonObject = UtilsFunctions.stringToJsonObjectGson(i);
             assert jsonObject != null;
             return jsonObject.get("uri").getAsString();
@@ -46,5 +52,15 @@ public class MqttVSMPhysicalAdapter {
 
     public MqttPhysicalAdapter build(String id) throws MqttPhysicalAdapterConfigurationException, MqttException {
         return new MqttPhysicalAdapter(id, builder.build());
+    }
+
+    @Override
+    public String getBaseTopic() {
+        return baseTopic;
+    }
+
+    @Override
+    public MqttPhysicalAdapterConfigurationBuilder getBuilder() {
+        return builder;
     }
 }

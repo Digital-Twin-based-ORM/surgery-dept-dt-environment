@@ -22,8 +22,8 @@ import static org.example.utils.GlobalValues.BELONGS_TO_NAME;
 public class OperatingRoomSemantic extends AbstractSemantic implements DigitalTwinSemantics {
     public static final String OPERATING_ROOM_SCTID = "225738002";
     private static final Map<String, RdfUriResource> PROPERTIES_DOMAIN_TAG = Map.of(
-            OPERATING_ROOM_NAME, new RdfUriResource(URI.create("http://hl7.org/fhir/name")),
-            LOCATION_TYPE, new RdfUriResource(URI.create("http://hl7.org/fhir/type"))
+            OPERATING_ROOM_NAME, new RdfUriResource(URI.create("http://www.hl7.org/fhir/name")),
+            LOCATION_TYPE, new RdfUriResource(URI.create("http://www.hl7.org/fhir/type"))
     );
     private static final Map<String, RdfUriResource> RELATIONSHIPS_DOMAIN_TAG = Map.of(
             BELONGS_TO_NAME, new RdfUriResource(URI.create("http://www.hl7.org/fhir/partOf"))
@@ -32,7 +32,7 @@ public class OperatingRoomSemantic extends AbstractSemantic implements DigitalTw
 
     @Override
     public List<RdfClass> getDigitalTwinTypes() {
-        return List.of(new RdfClass(URI.create("http://hl7.org/fhir/Location")));
+        return List.of(new RdfClass(URI.create("http://www.hl7.org/fhir/Location")));
     }
 
     @Override
@@ -52,6 +52,7 @@ public class OperatingRoomSemantic extends AbstractSemantic implements DigitalTw
 
     @Override
     public Optional<List<RdfUnSubjectedTriple>> mapData(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+        System.out.println("OR SEMANTIC _ LOADING.....");
         switch (digitalTwinStateProperty.getKey()) {
             case OPERATING_ROOM_NAME:
                 return Optional.of(List.of(
@@ -76,7 +77,7 @@ public class OperatingRoomSemantic extends AbstractSemantic implements DigitalTw
                                                 new RdfBlankNode("location-type-coding", List.of(
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")),
-                                                                new RdfUriResource(URI.create(SNOMED_URI_PREFIX + ((CodeableConcept) digitalTwinStateProperty.getValue()).getCode()))
+                                                                new RdfUriResource(URI.create(SNOMED_URI_PREFIX + OPERATING_ROOM_SCTID))
                                                         ),
                                                         new RdfUnSubjectedTriple(
                                                                 new RdfProperty(URI.create("http://www.hl7.org/fhir/system")),
@@ -120,7 +121,9 @@ public class OperatingRoomSemantic extends AbstractSemantic implements DigitalTw
                 ));
 
             default:
-                return Optional.empty();
+                return Optional.of(List.of(
+
+                ));
         }
     }
 

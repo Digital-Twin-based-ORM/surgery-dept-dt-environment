@@ -14,161 +14,24 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.example.dt.property.SurgeryProperties.*;
-import static org.example.physicalAdapter.MqttSurgeryPhysicalAdapter.STATUS_KEY;
+import static org.example.physicalAdapter.MqttSurgeryPhysicalAdapter.*;
 import static org.example.semantics.CodeSystems.SNOMED_CT;
 import static org.example.semantics.CodeSystems.SNOMED_URI_PREFIX;
-import static org.example.utils.GlobalValues.EXECUTED_IN_RELATIONSHIP_NAME;
-import static org.example.utils.GlobalValues.PATIENT_OPERATED_RELATIONSHIP_NAME;
-
-/*
-
-[
-    {
-        "key": "reason",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "suture_timestamp",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "code",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "execution_end_date",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "warnings",
-        "value": [],
-        "type": "java.util.ArrayList",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "admissionTime",
-        "value": "2025-09-23T09:10",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "priority",
-        "value": "C",
-        "type": "org.example.domain.model.PriorityClass",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "execution_start_date",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "score",
-        "value": 0,
-        "type": "java.lang.Integer",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "last_event",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "incision_timestamp",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "creationTimestamp",
-        "value": "2025-10-21T16:25:10.663274600",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "programmed_date",
-        "value": "2025-09-23T09:30",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "category",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "is_cancelled",
-        "value": false,
-        "type": "java.lang.Boolean",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "status",
-        "value": "",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    },
-    {
-        "key": "estimated_time",
-        "value": "60",
-        "type": "java.lang.String",
-        "readable": true,
-        "writable": true,
-        "exposed": true
-    }
-]
-
- */
+import static org.example.utils.GlobalValues.*;
 
 public class SurgerySemantic extends AbstractSemantic implements DigitalTwinSemantics {
     private static final Map<String, RdfUriResource> PROPERTIES_DOMAIN_TAG = Map.of(
             REASON_PROPERTY_KEY, new RdfUriResource(URI.create("http://hl7.org/fhir/reason")),
             CATEGORY_PROPERTY_KEY, new RdfUriResource(URI.create("http://hl7.org/fhir/category")),
             STATUS_KEY, new RdfUriResource(URI.create("http://hl7.org/fhir/status")),
-            CODE_PROPERTY_KEY, new RdfUriResource(URI.create("http://hl7.org/fhir/code"))
+            CODE_PROPERTY_KEY, new RdfUriResource(URI.create("http://hl7.org/fhir/code")),
+            IS_DONE_KEY, new RdfUriResource(URI.create("https://purl.org/mao/onto/isDone")),
+            IDENTIFIER_KEY, new RdfUriResource(URI.create("http://www.hl7.org/fhir/Identifier")),
+            // TODO
+            HOSPITALIZATION_REGIME_KEY, new RdfUriResource(URI.create("")),
+            WAITING_LIST_INSERTION_KEY, new RdfUriResource(URI.create("https://purl.org/mao/onto/waitingListDate")),
+            PRIORITY_KEY, new RdfUriResource(URI.create("https://purl.org/mao/onto/priority")),
+            EXECUTION_START_KEY, new RdfUriResource(URI.create("https://purl.org/mao/onto/executionDate"))
     );
     private static final Map<String, RdfUriResource> RELATIONSHIPS_DOMAIN_TAG = Map.of(
             PATIENT_OPERATED_RELATIONSHIP_NAME, new RdfUriResource(URI.create("http://www.hl7.org/fhir/subject")),
@@ -317,7 +180,7 @@ public class SurgerySemantic extends AbstractSemantic implements DigitalTwinSema
                 return Optional.of(List.of(
                                 new RdfUnSubjectedTriple(
                                         new RdfProperty(URI.create("http://www.hl7.org/fhir/code")),
-                                        new RdfBlankNode("", List.of(
+                                        new RdfBlankNode("procedure-code", List.of(
                                                 new RdfUnSubjectedTriple(
                                                         new RdfProperty(URI.create("http://www.hl7.org/fhir/coding")),
                                                         new RdfBlankNode("procedure-code-coding", List.of(
@@ -348,7 +211,7 @@ public class SurgerySemantic extends AbstractSemantic implements DigitalTwinSema
                                                 ),
                                                 new RdfUnSubjectedTriple(
                                                         new RdfProperty(URI.create("http://www.hl7.org/fhir/text")),
-                                                        new RdfBlankNode("procedure-category-string-description", List.of(
+                                                        new RdfBlankNode("procedure-code-string-description", List.of(
                                                                 new RdfUnSubjectedTriple(
                                                                         new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
                                                                         new RdfLiteral<>(((CodeableConcept) digitalTwinStateProperty.getValue()).getDescription())
@@ -360,8 +223,56 @@ public class SurgerySemantic extends AbstractSemantic implements DigitalTwinSema
                         )
                 );
 
+            case IS_DONE_KEY:
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create("https://purl.org/mao/onto/isDone")),
+                                new RdfLiteral<>(digitalTwinStateProperty.getValue())
+                        )
+                ));
+
+            case WAITING_LIST_INSERTION_KEY:
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create("https://purl.org/mao/onto/waitingListDate")),
+                                new RdfLiteral<>(digitalTwinStateProperty.getValue())
+                        )
+                ));
+
+            case PRIORITY_KEY:
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create("https://purl.org/mao/onto/priority")),
+                                new RdfLiteral<>(digitalTwinStateProperty.getValue())
+                        )
+                ));
+            case EXECUTION_START_KEY:
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create("https://purl.org/mao/onto/executionDate")),
+                                new RdfLiteral<>(digitalTwinStateProperty.getValue())
+                        )
+                ));
+            case IDENTIFIER_KEY:
+                return Optional.of(List.of(
+                        new RdfUnSubjectedTriple(
+                                new RdfProperty(URI.create("http://www.hl7.org/fhir/identifier")),
+                                new RdfBlankNode("surgery-identifier-object", List.of(
+                                        new RdfUnSubjectedTriple(
+                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/value")),
+                                                new RdfBlankNode("surgery-identifier-value", List.of(
+                                                        new RdfUnSubjectedTriple(
+                                                                new RdfProperty(URI.create("http://www.hl7.org/fhir/v")),
+                                                                new RdfLiteral<>(((String)digitalTwinStateProperty.getValue()))
+                                                        )
+                                                ))
+                                        )
+                                ))
+                        )
+                ));
+
             default:
-                return Optional.empty();
+                return Optional.of(List.of());
         }
     }
 

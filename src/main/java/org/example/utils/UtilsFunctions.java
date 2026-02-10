@@ -25,7 +25,6 @@ public class UtilsFunctions {
     }
 
     public static String getJsonField(String json, String field) {
-        Gson gson = new Gson();
         try {
             JsonObject jsonObj = stringToJsonObjectGson(json);
             assert jsonObj != null;

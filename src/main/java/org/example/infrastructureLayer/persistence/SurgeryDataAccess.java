@@ -1,5 +1,6 @@
 package org.example.infrastructureLayer.persistence;
 
+import org.example.domain.model.HospitalizationRegime;
 import org.example.domain.model.PriorityClass;
 import org.example.domain.model.Surgery;
 
@@ -25,6 +26,7 @@ public class SurgeryDataAccess {
     private static final String COL_ESTIMATED_TIME = "estimated_time";
     private static final String COL_PATIENT_ID = "patient_id";
     private static final String COL_SURGERY_ID = "surgery_id";
+    private static final String COL_WL_INSERTION_DATE = "wlInsertionDate";
 
     public static void main(String[] args) {
 
@@ -57,7 +59,8 @@ public class SurgeryDataAccess {
                     0,
                     60,
                     "patient_1",
-                    "surgery_1");
+                    "surgery_1",
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,10)));
 
             insertSimulationData(
                     conn,
@@ -68,7 +71,8 @@ public class SurgeryDataAccess {
                     0,
                     45,
                     "patient_2",
-                    "surgery_2");
+                    "surgery_2",
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,10)));
 
             insertSimulationData(
                     conn,
@@ -79,7 +83,8 @@ public class SurgeryDataAccess {
                     0,
                     45,
                     "patient_3",
-                    "surgery_3");
+                    "surgery_3",
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,10)));
 
             insertSimulationData(
                     conn,
@@ -90,7 +95,8 @@ public class SurgeryDataAccess {
                     0,
                     50,
                     "patient_4",
-                    "surgery_4");
+                    "surgery_4",
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,10)));
 
             insertSimulationData(
                     conn,
@@ -101,7 +107,8 @@ public class SurgeryDataAccess {
                     0,
                     30,
                     "patient_5",
-                    "surgery_5");
+                    "surgery_5",
+                    LocalDateTime.of(LocalDate.of(2025, 9, 23), LocalTime.of(9,0,10)));
 
             // 5. Retrieve and display data
             System.out.println("\nRetrieving simulation data:");
@@ -153,7 +160,8 @@ public class SurgeryDataAccess {
                 COL_ID + " INT PRIMARY KEY," +
                 COL_ARRIVAL_DATE + " DATETIME," +
                 COL_PROGRAMMED_DATE + " DATETIME," +
-                COL_ADMISSION_TIME + " DATETIME," + // Changed to DATETIME for better time representation
+                COL_ADMISSION_TIME + " DATETIME," +
+                COL_WL_INSERTION_DATE + " DATETIME," +
                 COL_PRIORITY + " INT," +
                 COL_ESTIMATED_TIME + " INT," +
                 COL_PATIENT_ID + " TEXT," +
@@ -177,10 +185,10 @@ public class SurgeryDataAccess {
      * @throws SQLException If a database access error occurs.
      */
     private static void insertSimulationData(Connection conn, int id, LocalDateTime arrivalDate,
-                                             LocalDateTime programmedDate, LocalDateTime admissionTime, int priority, int estimatedTime, String patientId, String surgery_id) throws SQLException {
+                                             LocalDateTime programmedDate, LocalDateTime admissionTime, int priority, int estimatedTime, String patientId, String surgery_id, LocalDateTime insertionDate) throws SQLException {
         String insertSQL = "INSERT INTO " + TABLE_NAME + " (" +
                 COL_ID + ", " + COL_ARRIVAL_DATE + ", " + COL_PROGRAMMED_DATE + ", " +
-                COL_ADMISSION_TIME + ", " + COL_PRIORITY + ", " + COL_ESTIMATED_TIME + ", " + COL_PATIENT_ID + ", " + COL_SURGERY_ID + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                COL_ADMISSION_TIME + ", " + COL_PRIORITY + ", " + COL_ESTIMATED_TIME + ", " + COL_PATIENT_ID + ", " + COL_SURGERY_ID + ", " + COL_WL_INSERTION_DATE + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
             pstmt.setInt(1, id);
             pstmt.setTimestamp(2, Timestamp.valueOf(arrivalDate)); // Convert LocalDate to java.sql.Date
@@ -190,6 +198,7 @@ public class SurgeryDataAccess {
             pstmt.setInt(6, estimatedTime);
             pstmt.setString(7, patientId);
             pstmt.setString(8, surgery_id);
+            pstmt.setTimestamp(9, Timestamp.valueOf(insertionDate));
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -208,7 +217,7 @@ public class SurgeryDataAccess {
      */
     public static ArrayList<Surgery> retrieveSimulationData(Connection conn) throws SQLException {
         String selectSQL = "SELECT " + COL_ID + ", " + COL_ARRIVAL_DATE + ", " + COL_PROGRAMMED_DATE + ", " +
-                COL_ADMISSION_TIME + ", " + COL_PRIORITY + ", " + COL_ESTIMATED_TIME + " FROM " + TABLE_NAME;
+                COL_ADMISSION_TIME + ", " + COL_PRIORITY + ", " + COL_ESTIMATED_TIME + ", " + COL_WL_INSERTION_DATE +  " FROM " + TABLE_NAME;
         ArrayList<Surgery> surgeries = new ArrayList<>();
         try (PreparedStatement pstmt = conn.prepareStatement(selectSQL);
              ResultSet rs = pstmt.executeQuery()) {
@@ -221,10 +230,11 @@ public class SurgeryDataAccess {
                 LocalDateTime admissionTime = rs.getTimestamp(COL_ADMISSION_TIME).toLocalDateTime(); // Or rs.getTimestamp for DATETIME
                 int priority = rs.getInt(COL_PRIORITY);
                 int estimated_time = rs.getInt(COL_ESTIMATED_TIME);
+                LocalDateTime insertionDate = rs.getTimestamp(COL_WL_INSERTION_DATE).toLocalDateTime();
 
                 System.out.printf("ID: %s, Arrival: %s, Programmed: %s, Admission: %s, Priority: %d%n",
                         id, arrivalDate, programmedDate, admissionTime, priority);
-                 surgeries.add(new Surgery(id, arrivalDate, programmedDate, admissionTime, LocalDateTime.now(), PriorityClass.values()[priority], estimated_time));
+                 surgeries.add(new Surgery(id, arrivalDate, programmedDate, admissionTime, PriorityClass.values()[priority], null, estimated_time, insertionDate));
             }
         }
         return surgeries;
