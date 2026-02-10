@@ -1,0 +1,128 @@
+version: '1'
+
+services:
+#  wldt-environment:
+#    build:
+#      context: ./wldt-dts
+#    container_name: wldt-digitaltwins
+#    networks:
+#      net:
+#    depends_on:
+#      wodt-platform:
+#        condition: service_healthy
+
+  wodtplatform:
+    image: ghcr.io/web-of-digital-twins/wodt-platform:2.3.1
+    container_name: wodtplatform
+    environment:
+      EXPOSED_PORT: 4000
+      PLATFORM_EXPOSED_URL: http://localhost:4000
+    ports:
+      - "4000:4000"
+    networks:
+      net:
+    healthcheck:
+      test: wget http://localhost:4000/wodt || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 5m
+
+  al-bridge:
+    image: al-bridge
+    ports:
+      - "9876:9876/udp"
+    depends_on:
+      - mosquittoMqtt
+    #network_mode: host
+    networks:
+      net:
+
+  dt-gateway:
+    image: dt-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      BASE_DT_HOST: host.docker.internal
+    networks:
+      net:
+
+  kpi-microservice:
+    image: kpi-microservice
+    ports:
+      - "8090:8090"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      WODT_HOST: wodtplatform
+      WODT_PORT: 4000
+    depends_on:
+      - db
+    networks:
+      net:
+
+  db:
+    image: mysql:5.7
+    container_name: db
+    command: --default-authentication-plugin=mysql_native_password -h 127.0.0.1
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wldt-db
+      MYSQL_USER: user_name
+      MYSQL_PASSWORD: root_password
+    ports:
+      - "6033:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      net:
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    links:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8081:80
+    networks:
+      net:
+
+  mosquittoMqtt:
+    image: eclipse-mosquitto:latest # Use the latest stable version of Mosquitto
+    restart: unless-stopped # Always restart unless the container is explicitly stopped
+    ports:
+      - "1883:1883" # Standard MQTT port (unencrypted)
+      - "9002:9002" # WebSocket port (for MQTT over WebSockets)
+      # - "8883:8883" # Uncomment for MQTT over TLS/SSL (requires certificate configuration)
+    volumes:
+      # Mount a custom configuration file
+      # You need to create a 'mosquitto.conf' file in a 'config' directory next to this compose.yml
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+      # Persist data (messages, subscriptions, etc.)
+      # This ensures data survives container restarts
+      - mosquitto_data:/mosquitto/data
+
+      # Persist logs
+      - mosquitto_log:/mosquitto/log
+    command: mosquitto -c /mosquitto/config/mosquitto.conf # Tell Mosquitto to use our custom config
+    healthcheck:
+      test: [ "CMD", "mosquitto_sub", "-h", "localhost", "-p", "1883", "-t", "$$SYS/broker/uptime", "-C", "1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      net:
+
+networks:
+  net:
+
+volumes:
+  dbdata:
+  mosquitto_data: # Docker managed volume for Mosquitto data
+  mosquitto_log:  # Docker managed volume for Mosquitto logs
